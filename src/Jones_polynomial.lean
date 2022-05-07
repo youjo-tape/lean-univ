@@ -7,7 +7,7 @@ import group_theory.perm.fin
 import tactic.norm_swap
 import Tangle
 
-variables (K: Type) [field K] (q: units K)
+variables (K: Type) [field K]
 
 @[simp] def K_2: Module K := Module.of K (fin 2 → K)
 
@@ -30,7 +30,8 @@ namespace Tangle
 
 @[simp] def toFinVect: Tangle → FinVect K
   | id := ⟨Module.of K K, finite_dimensional.finite_dimensional_self K⟩
-  | (of x) := if x then FinVect_K_2 K else FinVect_dual K (FinVect_K_2 K)
+  | (of tt) := FinVect_K_2 K
+  | (of ff) := FinVect_dual K (FinVect_K_2 K)
   | (tensor x y) := FinVect_tensor K x.toFinVect y.toFinVect
 
 @[simp] def rotate_to_dual (a: Tangle): a.rotate.toFinVect K = FinVect_dual K (a.toFinVect K) := begin
@@ -39,7 +40,7 @@ end
 
 end Tangle
 
-def functor_map: Π {X Y: Tangle}, (X ⟶ᵐ Y) → (X.toFinVect K ⟶ Y.toFinVect K)
+def functor_map (q: units K): Π {X Y: Tangle}, (X ⟶ᵐ Y) → (X.toFinVect K ⟶ Y.toFinVect K)
   | _ _ (𝟙 a) := linear_map.id
   | _ _ (f ≫ g) := functor_map g ∘ₗ functor_map f
   | _ _ (f ⊗ᵐ g) := tensor_product.map (functor_map f) (functor_map g)
@@ -67,45 +68,63 @@ def functor_map: Π {X Y: Tangle}, (X ⟶ᵐ Y) → (X.toFinVect K ⟶ Y.toFinVe
     have f := tensor_product.rid K (a.toFinVect K),
     exact Module.of_hom f.symm.to_linear_map,
   end
-  | _ _ (ε a) := begin
-    have f := module.dual.eval K (a.toFinVect K),
+  | _ _ (hom.evaluation_1 tt) := begin
+    have f := module.dual.eval K ((Tangle.of tt).toFinVect K),
     have g := tensor_product.uncurry K _ _ _ f,
-    simp, dsimp [Tangle.rotate_to_dual K a],
+    simp, dsimp [Tangle.rotate_to_dual K (Tangle.of tt)],
     exact Module.of_hom g,
   end
-  | _ _ (η a) := begin
+  | _ _ (hom.evaluation_1 ff) := begin
+    have f := module.dual.eval K ((Tangle.of ff).toFinVect K),
+    have g := tensor_product.uncurry K _ _ _ f,
+    rw Tangle.toFinVect at g,
+    simp, dsimp [Tangle.rotate_to_dual K (Tangle.of ff)],
+    have h := Module.of_hom g,
+    exact h,
+  end
+  | _ _ (hom.coevaluation_1 a) := begin
     have f := coevaluation K (a.toFinVect K),
     have g := (tensor_product.comm K _ _).to_linear_map ∘ₗ f,
     simp, dsimp [a.rotate_to_dual K],
     exact Module.of_hom g,
   end
-  | _ _ (β a b) := begin
-    have f := tensor_product.comm K (a.toFinVect K) (b.toFinVect K),
-    exact Module.of_hom f.to_linear_map,
+  | _ _ hom.braiding_dd_hom := begin
+    have mat: matrix (fin 4) (fin 4) K := ![
+      ![q^(1/2), 0, 0, 0],
+      ![0, 0, q, 0],
+      ![0, q, q^(1/2)-q^(3/2), 0],
+      ![0, 0, 0, q^(1/2)]
+    ],
+    have X := (↓ ⊗ᵗ ↓).toFinVect K,
+    have b: basis _ _ _ := sorry,
+    have f := matrix.to_lin b b,
   end
-  | _ _ (β⁻¹ a b) := begin
-    have f := tensor_product.comm K (a.toFinVect K) (b.toFinVect K),
-    exact Module.of_hom f.symm.to_linear_map,
-  end
+  | _ _ hom.braiding_dd_inv := sorry
 
 def functor_tangle: Tangle ⥤ FinVect K := {
   obj := Tangle.toFinVect K,
-  map := by rintro X Y ⟨f⟩; exact functor_map K f,
+  map := begin
+    rintro X Y f, 
+  end --by rintro X Y ⟨f⟩; exact functor_map K f,
 }
 
 namespace test
 
 open_locale matrix
 
-def f: fin 3 → rat := λ i, i + 2
+def f: fin 3 → rat := λ i, i + 2 -- (2, 3, 4)
 
-example: 3 = 3 := by simp
-example: (3: fin 2) = 3 := by simp
+@[simp] def iota (n: ℕ): fin n → ℤ := λ i, i
 
-@[simp] def iota (n: nat): fin n → nat := λ i, i
+/-
+iota 3 = (0, 1, 2)
+iota 4 = (0, 1, 2, 3)
+-/
 
 example: iota 3 = ![0, 1, 2] := begin
-  funext i, simp,
+  ext i, apply @fin.cons_induction i ![0, 1, 2], simp, cases i, induction i_val,
+    simp,
+    
 end
 
 example (i: fin 3): ![0, 1, 2] i = i := begin
@@ -122,9 +141,12 @@ end
   := λ i j, if (i = j) then 1 else 0
 
 example: mat_id 2 = ![![1, 0], ![0, 1]] := begin
+  funext, simp,
 end
 
-#eval mat_id 2 -- ![![1, 0], ![0, 1]] とは表示されるが、pi_fin.has_repr が記号の濫用をしているだけ
+example: ![![1, 0], ![0, 1]] ⬝ ![![1, 0], ![0, 1]] = ![![1, 0], ![0, 1]] := begin
+  simp,
+end
 
 example (n: nat): mat_id n ⬝ mat_id n = mat_id n := begin
   funext, rw matrix.mul, dsimp [matrix.dot_product], simp,

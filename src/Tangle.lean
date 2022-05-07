@@ -6,9 +6,11 @@ inductive Tangle: Type
   | of(x: bool): Tangle
   | tensor: Tangle → Tangle → Tangle
 
-local infix ` ⊗ᵗ `:50 := Tangle.tensor
-
 namespace Tangle
+
+infix ` ⊗ᵗ `:50 := Tangle.tensor
+notation `↓` := Tangle.of tt
+notation `↑` := Tangle.of ff
 
 @[simp] def flip: Tangle → Tangle
   | id := id
@@ -16,10 +18,10 @@ namespace Tangle
   | (a ⊗ᵗ b) := a.flip ⊗ᵗ b.flip
 
 @[simp] def reverse: Tangle → Tangle
-  | (a ⊗ᵗ b) := a.reverse ⊗ᵗ b.reverse
+  | (a ⊗ᵗ b) := b.reverse ⊗ᵗ a.reverse
   | a := a
 
-def rotate (a: Tangle) := a.flip.reverse
+@[simp] def rotate (a: Tangle) := a.flip.reverse
 
 end Tangle
 open Tangle
@@ -34,25 +36,84 @@ inductive hom: Tangle → Tangle → Type
   | left_unitor_inv (a): hom a (id ⊗ᵗ a)
   | right_unitor_hom (a): hom (a ⊗ᵗ id) a
   | right_unitor_inv (a): hom a (a ⊗ᵗ id)
-  |   evaluation (a: Tangle): hom (a ⊗ᵗ a.rotate) id
-  | coevaluation (a: Tangle): hom id (a.rotate ⊗ᵗ a)
-  | braiding_hom (a b): hom (a ⊗ᵗ b) (b ⊗ᵗ a)
-  | braiding_inv (a b): hom (b ⊗ᵗ a) (a ⊗ᵗ b)
+  |   evaluation_1 (a): hom (of a ⊗ᵗ (of a).rotate) id
+  | coevaluation_1 (a): hom id ((of a).rotate ⊗ᵗ of a)
+  | braiding_dd_hom: hom (↓ ⊗ᵗ ↓) (↓ ⊗ᵗ ↓)
+  | braiding_dd_inv: hom (↓ ⊗ᵗ ↓) (↓ ⊗ᵗ ↓)
 
-infix ` ⟶ᵐ `:10 := hom
-notation `𝟙` := hom.id
-infix ` ≫ `:80 := hom.comp
-infix ` ⊗ᵐ `: 70 := hom.tensor
-notation `α` := hom.associator_hom
-notation `α⁻¹` := hom.associator_inv
-notation `ℓ` := hom.left_unitor_hom
-notation `ℓ⁻¹` := hom.left_unitor_inv
-notation `ρ` := hom.right_unitor_hom
-notation `ρ⁻¹` := hom.right_unitor_inv
-notation `ε` := hom.evaluation
-notation `η` := hom.coevaluation
-notation `β` := hom.braiding_hom
-notation `β⁻¹` := hom.braiding_inv
+namespace hom
+  infix ` ⟶ᵐ `: 10 := hom
+  notation `𝟙` := hom.id
+  infix ` ≫ `: 60 := hom.comp
+  infix ` ⊗ᵐ `: 70 := hom.tensor
+  notation `α` := hom.associator_hom
+  notation `α⁻¹` := hom.associator_inv
+  notation `ℓ` := hom.left_unitor_hom
+  notation `ℓ⁻¹` := hom.left_unitor_inv
+  notation `ρ` := hom.right_unitor_hom
+  notation `ρ⁻¹` := hom.right_unitor_inv
+
+  def evaluation: Π (a: Tangle), (a ⊗ᵗ a.rotate) ⟶ᵐ Tangle.id
+    | Tangle.id := ℓ _
+    | (of _) := evaluation_1 _
+    | (_ ⊗ᵗ _) := α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 _ ⊗ᵐ evaluation _ ⊗ᵐ 𝟙 _ ≫ ρ _ ⊗ᵐ 𝟙 _
+      ≫ evaluation _
+
+  def coevaluation: Π (a: Tangle), Tangle.id ⟶ᵐ (a.rotate ⊗ᵗ a)
+    | Tangle.id := ℓ⁻¹ _
+    | (of _) := coevaluation_1 _
+    | (_ ⊗ᵗ _) := coevaluation _ ≫ ρ⁻¹ _ ⊗ᵐ 𝟙 _
+       ≫ 𝟙 _ ⊗ᵐ coevaluation _ ⊗ᵐ 𝟙 _ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+
+  notation `ε` := evaluation
+  notation `η` := coevaluation
+
+  def rotate {a b} (braid: a ⊗ᵗ b ⟶ᵐ b ⊗ᵗ a) := ℓ⁻¹ _
+    ≫ η _ ⊗ᵐ 𝟙 _ ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+    ≫ 𝟙 _ ⊗ᵐ braid ⊗ᵐ 𝟙 _ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+    ≫ 𝟙 _ ⊗ᵐ ε _ ≫ ρ _
+
+  def braiding_du_hom: ↓ ⊗ᵗ ↑ ⟶ᵐ ↑ ⊗ᵗ ↓ := braiding_dd_inv.rotate
+  def braiding_du_inv: ↓ ⊗ᵗ ↑ ⟶ᵐ ↑ ⊗ᵗ ↓ := braiding_dd_hom.rotate
+  def braiding_uu_hom: ↑ ⊗ᵗ ↑ ⟶ᵐ ↑ ⊗ᵗ ↑ := braiding_du_inv.rotate
+  def braiding_uu_inv: ↑ ⊗ᵗ ↑ ⟶ᵐ ↑ ⊗ᵗ ↑ := braiding_du_hom.rotate
+  def braiding_ud_hom: ↑ ⊗ᵗ ↓ ⟶ᵐ ↓ ⊗ᵗ ↑ := braiding_uu_inv.rotate
+  def braiding_ud_inv: ↑ ⊗ᵗ ↓ ⟶ᵐ ↓ ⊗ᵗ ↑ := braiding_uu_hom.rotate
+
+  def braiding_11_hom: Π a b, of a ⊗ᵗ of b ⟶ᵐ of b ⊗ᵗ of a
+    | tt tt := braiding_dd_hom
+    | tt ff := braiding_du_hom
+    | ff tt := braiding_ud_hom
+    | ff ff := braiding_uu_hom
+  def braiding_11_inv: Π b a, of b ⊗ᵗ of a ⟶ᵐ of a ⊗ᵗ of b
+    | tt tt := braiding_dd_inv
+    | tt ff := braiding_du_inv
+    | ff tt := braiding_ud_inv
+    | ff ff := braiding_uu_inv
+
+  def braiding (braiding_11: Π x y, of x ⊗ᵗ of y ⟶ᵐ of y ⊗ᵗ of x): Π a b, a ⊗ᵗ b ⟶ᵐ b ⊗ᵗ a
+    | Tangle.id _ := ℓ _ ≫ ρ⁻¹ _
+    | _ Tangle.id := ρ _ ≫ ℓ⁻¹ _
+    | (of _) (of _) := braiding_11 _ _
+    | (of _) (_ ⊗ᵗ _) := α⁻¹ _ _ _
+      ≫ braiding _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 _ ⊗ᵐ braiding _ _ ≫ α⁻¹ _ _ _
+    | (_ ⊗ᵗ _) (of _) := α _ _ _
+      ≫ 𝟙 _ ⊗ᵐ braiding _ _ ≫ α⁻¹ _ _ _
+      ≫ braiding _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+    | (_ ⊗ᵗ _) (_ ⊗ᵗ _) := α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 _ ⊗ᵐ braiding _ _ ⊗ᵐ 𝟙 _ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ braiding _ _ ⊗ᵐ braiding _ _ ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 _ ⊗ᵐ braiding _ _ ⊗ᵐ 𝟙 _ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+
+  def braiding_hom := braiding braiding_11_hom
+  def braiding_inv := braiding braiding_11_inv
+
+  notation `β` := braiding_hom
+  notation `β⁻¹` := braiding_inv
+end hom
+
 
 inductive hom_equiv: Π {X Y}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | refl {X Y} (f: X ⟶ᵐ Y): hom_equiv f f
@@ -82,8 +143,8 @@ inductive hom_equiv: Π {X Y}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | evaluation_coevaluation {X}: hom_equiv ((η X ⊗ᵐ 𝟙 X.rotate) ≫ (α X.rotate X X.rotate ≫ (𝟙 X.rotate ⊗ᵐ ε X))) (ℓ X.rotate ≫ ρ⁻¹ X.rotate)
   | coevaluation_evaluation {X}: hom_equiv ((𝟙 X ⊗ᵐ η X) ≫ (α⁻¹ X X.rotate X ≫ (ε X ⊗ᵐ 𝟙 X))) (ρ X ≫ ℓ⁻¹ X)
 
-  | braiding_hom_inv {X Y: Tangle}: hom_equiv (β X Y ≫ β⁻¹ X Y) (𝟙 (X ⊗ᵗ Y))
-  | braiding_inv_hom {X Y: Tangle}: hom_equiv (β⁻¹ X Y ≫ β X Y) (𝟙 (Y ⊗ᵗ X))
+  | braiding_hom_inv {X Y: Tangle}: hom_equiv (β X Y ≫ β⁻¹ Y X) (𝟙 (X ⊗ᵗ Y))
+  | braiding_inv_hom {X Y: Tangle}: hom_equiv (β⁻¹ Y X ≫ β X Y) (𝟙 (Y ⊗ᵗ X))
   | braiding_naturality {X X' Y Y'} (f : X ⟶ᵐ Y) (g : X' ⟶ᵐ Y'): hom_equiv ((f ⊗ᵐ g) ≫ β Y Y') (β X X' ≫ (g ⊗ᵐ f))
   | hexagon_forward {X Y Z}: hom_equiv (α X Y Z ≫ (β X (Y ⊗ᵗ Z) ≫ α Y Z X)) ((β X Y ⊗ᵐ 𝟙 Z) ≫ (α Y X Z ≫ (𝟙 Y ⊗ᵐ β X Z)))
   | hexagon_reverse {X Y Z}: hom_equiv
@@ -147,7 +208,7 @@ instance left_rigid_category: category_theory.left_rigid_category Tangle := {
 instance braided_category: category_theory.braided_category Tangle := {
   braiding := λ X Y, {
     hom := ⟦β X Y⟧,
-    inv := ⟦β⁻¹ X Y⟧,
+    inv := ⟦β⁻¹ Y X⟧,
     hom_inv_id' := quotient.sound hom_equiv.braiding_hom_inv,
     inv_hom_id' := quotient.sound hom_equiv.braiding_inv_hom,
   },
