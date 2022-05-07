@@ -97,7 +97,8 @@ def functor_map (q: units K): Π {X Y: Tangle}, (X ⟶ᵐ Y) → (X.toFinVect K 
     ],
     have X := (↓ ⊗ᵗ ↓).toFinVect K,
     have b: basis _ _ _ := sorry,
-    have f := matrix.to_lin b b,
+    have f := matrix.to_lin b b mat,
+    exact f,
   end
   | _ _ hom.braiding_dd_inv := sorry
 
