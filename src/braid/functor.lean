@@ -31,10 +31,10 @@ def matrix_braiding (q: units K): matrix (fin 4) (fin 4) K := ![
 def mat_braiding_aux: fin 2 × fin 2 → fin 4 := λ ⟨x, y⟩, 2*x+y
 
 noncomputable def map_braiding (q: units K): FinVect_K_2 K ⊗ᶠ FinVect_K_2 K ⟶ FinVect_K_2 K ⊗ᶠ FinVect_K_2 K := begin
-    have b := pi.basis_fun K (fin 2),
-    have b2 := basis.tensor_product b b,
-    have m := λ x y, matrix_braiding K q (mat_braiding_aux x) (mat_braiding_aux y),
-    exact matrix.to_lin b2 b2 m,
+  have b := pi.basis_fun K (fin 2),
+  have b2 := basis.tensor_product b b,
+  have m := λ x y, matrix_braiding K q (mat_braiding_aux x) (mat_braiding_aux y),
+  exact matrix.to_lin b2 b2 m,
 end
 
 noncomputable def functor_map (q: units K): Π {X Y: Braid}, (X ⟶ᵐ Y) → (X.toFinVect K ⟶ Y.toFinVect K)
@@ -57,6 +57,6 @@ def functor (q: units K): Braid ⥤ FinVect K := {
   map := begin
     rintro X Y f,
     refine functor_map K q _, induction f with _ f g hfg, assumption,
-    
+
   end
 }

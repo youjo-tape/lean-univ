@@ -7,6 +7,12 @@ open_locale tensor_product
 
 variables (K: Type) [field K]
 
+structure rmatrix (C: Type) [category C] (x: C) := -- x 上の R 行列
+  (hom: x ⊗ x → x ⊗ x)
+  () -- ここに関係式
+
+/- C -> FinVect, x -> (fin 2 -> K) -/
+
 abbreviation mat (r c: nat) (K) := matrix (fin r) (fin c) K
 
 def matrix_tensor {r₁ c₁ r₂ c₂} (M₁: mat r₁ c₁ K) (M₂: mat r₂ c₂ K)
