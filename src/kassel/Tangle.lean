@@ -23,27 +23,24 @@ namespace Tangle
 
   @[simp] def rotate (a: Tangle) := a.flip.reverse
   @[simp] def rotate_rotate (a: Tangle): a.rotate.rotate = a := by induction a; tidy
-end Tangle
-open Tangle
 
-inductive hom: Tangle → Tangle → Type
-  | id (a): hom a a
-  | comp {a b c} (f: hom a b) (g: hom b c): hom a c
-  | tensor {a b c d} (f: hom a b) (g: hom c d): hom (a ⊗ᵗ c) (b ⊗ᵗ d)
-  | associator_hom (a b c): hom ((a ⊗ᵗ b) ⊗ᵗ c) (a ⊗ᵗ (b ⊗ᵗ c))
-  | associator_inv (a b c): hom (a ⊗ᵗ (b ⊗ᵗ c)) ((a ⊗ᵗ b) ⊗ᵗ c)
-  | left_unitor_hom (a): hom (id ⊗ᵗ a) a
-  | left_unitor_inv (a): hom a (id ⊗ᵗ a)
-  | right_unitor_hom (a): hom (a ⊗ᵗ id) a
-  | right_unitor_inv (a): hom a (a ⊗ᵗ id)
-  | evaluation (a): hom (a ⊗ᵗ a.rotate) id
-  | coevaluation (a: Tangle): hom id (a.rotate ⊗ᵗ a)
-  | braiding_hom (a b): hom (a ⊗ᵗ b) (b ⊗ᵗ a)
-  | braiding_inv (a b): hom (b ⊗ᵗ a) (a ⊗ᵗ b)
+  inductive hom: Tangle → Tangle → Type
+    | id (a): hom a a
+    | comp {a b c} (f: hom a b) (g: hom b c): hom a c
+    | tensor {a b c d} (f: hom a b) (g: hom c d): hom (a ⊗ᵗ c) (b ⊗ᵗ d)
+    | associator_hom (a b c): hom ((a ⊗ᵗ b) ⊗ᵗ c) (a ⊗ᵗ (b ⊗ᵗ c))
+    | associator_inv (a b c): hom (a ⊗ᵗ (b ⊗ᵗ c)) ((a ⊗ᵗ b) ⊗ᵗ c)
+    | left_unitor_hom (a): hom (id ⊗ᵗ a) a
+    | left_unitor_inv (a): hom a (id ⊗ᵗ a)
+    | right_unitor_hom (a): hom (a ⊗ᵗ id) a
+    | right_unitor_inv (a): hom a (a ⊗ᵗ id)
+    | evaluation (a): hom (a ⊗ᵗ a.rotate) id
+    | coevaluation (a: Tangle): hom id (a.rotate ⊗ᵗ a)
+    | braiding_hom (a b): hom (a ⊗ᵗ b) (b ⊗ᵗ a)
+    | braiding_inv (a b): hom (b ⊗ᵗ a) (a ⊗ᵗ b)
 
-namespace hom
   infix ` ⟶ᵐ `: 10 := hom
-  infix ` ≫ `: 60 := hom.comp
+  local infix ` ≫ `: 60 := hom.comp
   infix ` ⊗ᵐ `: 70 := hom.tensor
   notation `𝟙` := hom.id
   notation `α` := hom.associator_hom
@@ -52,164 +49,105 @@ namespace hom
   notation `ℓ⁻¹` := hom.left_unitor_inv
   notation `ρ` := hom.right_unitor_hom
   notation `ρ⁻¹` := hom.right_unitor_inv
-  notation `ε` := evaluation
-  notation `η` := coevaluation
-  notation `β` := braiding_hom
-  notation `β⁻¹` := braiding_inv
-end hom
-open hom
+  notation `ε` := hom.evaluation
+  notation `η` := hom.coevaluation
+  notation `β` := hom.braiding_hom
+  notation `β⁻¹` := hom.braiding_inv
 
-/-
-  associator, unitor の自動補完を試みる
-  → associator はむずそうなので unitor だけでも……
--/
+  inductive hom_equiv: Π {X Y}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
+    | refl {X Y} (f: X ⟶ᵐ Y): hom_equiv f f
+    | symm {X Y} (f g: X ⟶ᵐ Y): hom_equiv f g → hom_equiv g f
+    | trans {X Y} (f g h: X ⟶ᵐ Y): hom_equiv f g → hom_equiv g h → hom_equiv f h
 
-namespace Tangle
-  @[simp] def remove_unit: Tangle → Tangle
-    | (id ⊗ᵗ a) := a.remove_unit
-    | (a ⊗ᵗ id) := a.remove_unit
-    | (a ⊗ᵗ b) := a.remove_unit ⊗ᵗ b.remove_unit
-    | a := a
+    | comp {X Y Z} {f₁ f₂: X ⟶ᵐ Y} {g₁ g₂: Y ⟶ᵐ Z}: hom_equiv f₁ f₂ → hom_equiv g₁ g₂ → hom_equiv (f₁ ≫ g₁) (f₂ ≫ g₂)
+    | id_comp {X Y} (f: X ⟶ᵐ Y): hom_equiv (𝟙 X ≫ f) f
+    | comp_id {X Y} (f: X ⟶ᵐ Y): hom_equiv (f ≫ 𝟙 Y) f
+    | assoc {W X Y Z} (f: W ⟶ᵐ X) (g: X ⟶ᵐ Y) (h: Y ⟶ᵐ Z): hom_equiv ((f ≫ g) ≫ h) (f ≫ (g ≫ h))
 
-  @[simp] def remove_unit_left (a): (id ⊗ᵗ a).remove_unit = a.remove_unit := by induction a; tidy
-  @[simp] def remove_unit_right (a): (a ⊗ᵗ id).remove_unit = a.remove_unit := by induction a; tidy
-  @[simp] def remove_unit_tensor (a b) [a ≠ id] [b ≠ id]: (a ⊗ᵗ b).remove_unit = (a.remove_unit ⊗ᵗ b.remove_unit) := begin
-    induction b,
-      contradiction,
-      repeat {induction a, contradiction, simp, simp},
-  end
+    | tensor {X₁ Y₁ X₂ Y₂} {f₁ g₁: X₁ ⟶ᵐ Y₁} {f₂ g₂: X₂ ⟶ᵐ Y₂}: hom_equiv f₁ g₁ → hom_equiv f₂ g₂ → hom_equiv (f₁ ⊗ᵐ f₂) (g₁ ⊗ᵐ g₂)
+    | tensor_id {X Y}: hom_equiv (𝟙 X ⊗ᵐ 𝟙 Y) (𝟙 (X ⊗ᵗ Y))
+    | tensor_comp {X₁ Y₁ Z₁ X₂ Y₂ Z₂} (f₁: X₁ ⟶ᵐ Y₁) (f₂: X₂ ⟶ᵐ Y₂) (g₁: Y₁ ⟶ᵐ Z₁) (g₂: Y₂ ⟶ᵐ Z₂): hom_equiv ((f₁ ≫ g₁) ⊗ᵐ (f₂ ≫ g₂)) ((f₁ ⊗ᵐ f₂) ≫ (g₁ ⊗ᵐ g₂))
+    | associator_hom_inv {X Y Z}: hom_equiv (α X Y Z ≫ α⁻¹ X Y Z) (𝟙 ((X ⊗ᵗ Y) ⊗ᵗ Z))
+    | associator_inv_hom {X Y Z}: hom_equiv (α⁻¹ X Y Z ≫ α X Y Z) (𝟙 (X ⊗ᵗ (Y ⊗ᵗ Z)))
+    | associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} (f₁: X₁ ⟶ᵐ Y₁) (f₂: X₂ ⟶ᵐ Y₂) (f₃: X₃ ⟶ᵐ Y₃): hom_equiv (((f₁ ⊗ᵐ f₂) ⊗ᵐ f₃) ≫ α Y₁ Y₂ Y₃) (α X₁ X₂ X₃ ≫ (f₁ ⊗ᵐ (f₂ ⊗ᵐ f₃)))
+    | left_unitor_hom_inv {X}: hom_equiv (ℓ X ≫ ℓ⁻¹ X) (𝟙 (id ⊗ᵗ X))
+    | left_unitor_inv_hom {X}: hom_equiv (ℓ⁻¹ X ≫ ℓ X) (𝟙 X)
+    | left_unitor_naturality {X Y} (f: X ⟶ᵐ Y): hom_equiv ((𝟙 id ⊗ᵐ f) ≫ ℓ Y) (ℓ X ≫ f)
+    | right_unitor_hom_inv {X}: hom_equiv (ρ X ≫ ρ⁻¹ X) (𝟙 (X ⊗ᵗ id))
+    | right_unitor_inv_hom {X}: hom_equiv (ρ⁻¹ X ≫ ρ X) (𝟙 X)
+    | right_unitor_naturality {X Y} (f: X ⟶ᵐ Y): hom_equiv ((f ⊗ᵐ 𝟙 id) ≫ ρ Y) (ρ X ≫ f)
+    | pentagon {W X Y Z}: hom_equiv ((α W X Y ⊗ᵐ 𝟙 Z) ≫ (α W (X ⊗ᵗ Y) Z ≫ (𝟙 W ⊗ᵐ α X Y Z))) (α (W ⊗ᵗ X) Y Z ≫ α W X (Y ⊗ᵗ Z))
+    | triangle {X Y}: hom_equiv (α X id Y ≫ (𝟙 X ⊗ᵐ ℓ Y)) (ρ X ⊗ᵐ 𝟙 Y)
 
-  @[simp] def sorted: Tangle → Prop
-    | (a ⊗ᵗ (b ⊗ᵗ c)) := false
-    | (a ⊗ᵗ b) := a.sorted
-    | _ := true
-
-  @[simp] def tail: Tangle → Tangle
-    | (a ⊗ᵗ b) := b.tail
-    | a := a
-  @[simp] def heads: Tangle → Tangle
-    | (a ⊗ᵗ (b ⊗ᵗ c)) := a ⊗ᵗ (b ⊗ᵗ c).heads
-    | (a ⊗ᵗ b) := a
-    | _ := id
-
-  @[simp] def heads_sizeof (a: Tangle) (h: 2 < a.sizeof): a.heads.sizeof < a.sizeof := begin
-    sorry, /-induction a,
-      simp at *, contradiction,
-      simp at *,-/
-  end
-
-  @[simp] def sort: Tangle → Tangle
-    | (a ⊗ᵗ b) :=
-      have (a ⊗ᵗ b).heads.sizeof < 1 + a.sizeof + b.sizeof,
-      from begin sorry, /-
-        have h: 2 < (a ⊗ᵗ b).sizeof := by sorry,
-        have h2 := heads_sizeof _ h, simp at h2,
-        have h3 := has_lt.lt.trans,
-        sorry, -- induction b, simp, -/
-      end, ((a ⊗ᵗ b).heads).sort ⊗ᵗ (a ⊗ᵗ b).tail
-    | a := a
-
--- nat.exists_eq_add_of_lt
-
-  @[simp] def sort_sorted (a: Tangle): sorted a.sort := begin
-    induction a with _ a b ha hb,
-      repeat {simp}, induction b, simp,
-
-  end
-
-  /-
-  @[simp] mutual def sort_aux, sort'
-    with sort_aux: Tangle → Tangle → Tangle
-    | a (b ⊗ᵗ c) := sort_aux (a ⊗ᵗ b) c
-    | a b := a.sort' ⊗ᵗ b
-    with sort': Tangle → Tangle
-    | (a ⊗ᵗ b) := sort_aux a b
-    | a := a
-  -/
-end Tangle
-
-namespace hom
-  @[simp] def unitor: Π a, a ⟶ᵐ a.remove_unit
-    | (Tangle.id ⊗ᵗ a) := by simp; exact ℓ a ≫ unitor a
-    | (a ⊗ᵗ Tangle.id) := by simp; exact ρ a ≫ unitor a
-    | (of x ⊗ᵗ of y) := unitor _ ⊗ᵐ unitor _
-    | (of x ⊗ᵗ (a ⊗ᵗ b)) := unitor _ ⊗ᵐ unitor _
-    | ((a ⊗ᵗ b) ⊗ᵗ of x) := unitor _ ⊗ᵐ unitor _
-    | ((a ⊗ᵗ b) ⊗ᵗ (c ⊗ᵗ d)) := unitor _ ⊗ᵐ unitor _
-    | Tangle.id := 𝟙 _
-    | (of x) := 𝟙 _
-
-  @[simp] def sorter: Π a, a ⟶ᵐ a.sort
-    | (a ⊗ᵗ (b ⊗ᵗ c)) := begin
-      have f := 𝟙 a ⊗ᵐ sorter (b ⊗ᵗ c) ≫ α⁻¹ _ _ _ ≫ (sorter _ ⊗ᵐ 𝟙 _),
-      have h: (a ⊗ᵗ (b ⊗ᵗ c).heads).sort ⊗ᵗ (b ⊗ᵗ c).tail = (a ⊗ᵗ (b ⊗ᵗ c)).sort := begin
-        induction a, induction b, induction c,
-          simp,
-      end,
-      rw h at f, exact f,
-    end
-    | (a ⊗ᵗ b) := 
-
-  @[simp] def inverse: Π {a b}, (a ⟶ᵐ b) → (b ⟶ᵐ a)
-    | _ _ (𝟙 _) := 𝟙 _
-    | _ _ (f ≫ g) := g.inverse ≫ f.inverse
-    | _ _ (f ⊗ᵐ g) := f.inverse ⊗ᵐ g.inverse
-    | _ _ (α _ _ _) := α⁻¹ _ _ _
-    | _ _ (α⁻¹ _ _ _) := α _ _ _
-    | _ _ (ℓ _) := ℓ⁻¹ _
-    | _ _ (ℓ⁻¹ _) := ℓ _
-    | _ _ (ρ _) := ρ⁻¹ _
-    | _ _ (ρ⁻¹ _) := ρ _
-    | _ _ (ε a) := begin have f := η (a.rotate), simp only [rotate_rotate] at f, exact f, end
-    | _ _ (η a) := begin have f := ε (a.rotate), simp only [rotate_rotate] at f, exact f, end
-    | _ _ (β _ _) := β⁻¹ _ _
-    | _ _ (β⁻¹ _ _) := β _ _
-
-  @[simp] def unitor_inv (a) := (unitor a).inverse
-
-  def normalize {a b} (f: a ⟶ᵐ b) := unitor_inv _ ≫ f ≫ unitor _
-  notation `υ` := normalize
-end hom
-
-inductive hom_equiv: Π {X Y}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
-  | refl {X Y} (f: X ⟶ᵐ Y): hom_equiv f f
-  | symm {X Y} (f g: X ⟶ᵐ Y): hom_equiv f g → hom_equiv g f
-  | trans {X Y} (f g h: X ⟶ᵐ Y): hom_equiv f g → hom_equiv g h → hom_equiv f h
-
-  | comp {X Y Z} {f₁ f₂: X ⟶ᵐ Y} {g₁ g₂: Y ⟶ᵐ Z}: hom_equiv f₁ f₂ → hom_equiv g₁ g₂ → hom_equiv (f₁ ≫ g₁) (f₂ ≫ g₂)
-  | id_comp {X Y} (f: X ⟶ᵐ Y): hom_equiv (𝟙 X ≫ f) f
-  | comp_id {X Y} (f: X ⟶ᵐ Y): hom_equiv (f ≫ 𝟙 Y) f
-  | assoc {W X Y Z} (f: W ⟶ᵐ X) (g: X ⟶ᵐ Y) (h: Y ⟶ᵐ Z): hom_equiv ((f ≫ g) ≫ h) (f ≫ (g ≫ h))
-
-  | tensor {X₁ Y₁ X₂ Y₂} {f₁ g₁: X₁ ⟶ᵐ Y₁} {f₂ g₂: X₂ ⟶ᵐ Y₂}: hom_equiv f₁ g₁ → hom_equiv f₂ g₂ → hom_equiv (f₁ ⊗ᵐ f₂) (g₁ ⊗ᵐ g₂)
-  | tensor_id {X Y}: hom_equiv (𝟙 X ⊗ᵐ 𝟙 Y) (𝟙 (X ⊗ᵗ Y))
-  | tensor_comp {X₁ Y₁ Z₁ X₂ Y₂ Z₂} (f₁: X₁ ⟶ᵐ Y₁) (f₂: X₂ ⟶ᵐ Y₂) (g₁: Y₁ ⟶ᵐ Z₁) (g₂: Y₂ ⟶ᵐ Z₂): hom_equiv ((f₁ ≫ g₁) ⊗ᵐ (f₂ ≫ g₂)) ((f₁ ⊗ᵐ f₂) ≫ (g₁ ⊗ᵐ g₂))
-  | associator_hom_inv {X Y Z}: hom_equiv (α X Y Z ≫ α⁻¹ X Y Z) (𝟙 ((X ⊗ᵗ Y) ⊗ᵗ Z))
-  | associator_inv_hom {X Y Z}: hom_equiv (α⁻¹ X Y Z ≫ α X Y Z) (𝟙 (X ⊗ᵗ (Y ⊗ᵗ Z)))
-  | associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} (f₁: X₁ ⟶ᵐ Y₁) (f₂: X₂ ⟶ᵐ Y₂) (f₃: X₃ ⟶ᵐ Y₃): hom_equiv (((f₁ ⊗ᵐ f₂) ⊗ᵐ f₃) ≫ α Y₁ Y₂ Y₃) (α X₁ X₂ X₃ ≫ (f₁ ⊗ᵐ (f₂ ⊗ᵐ f₃)))
-  | left_unitor_hom_inv {X}: hom_equiv (ℓ X ≫ ℓ⁻¹ X) (𝟙 (id ⊗ᵗ X))
-  | left_unitor_inv_hom {X}: hom_equiv (ℓ⁻¹ X ≫ ℓ X) (𝟙 X)
-  | left_unitor_naturality {X Y} (f: X ⟶ᵐ Y): hom_equiv ((𝟙 id ⊗ᵐ f) ≫ ℓ Y) (ℓ X ≫ f)
-  | right_unitor_hom_inv {X}: hom_equiv (ρ X ≫ ρ⁻¹ X) (𝟙 (X ⊗ᵗ id))
-  | right_unitor_inv_hom {X}: hom_equiv (ρ⁻¹ X ≫ ρ X) (𝟙 X)
-  | right_unitor_naturality {X Y} (f: X ⟶ᵐ Y): hom_equiv ((f ⊗ᵐ 𝟙 id) ≫ ρ Y) (ρ X ≫ f)
-
-  | relation_1_1: hom_equiv (υ (𝟙 ↓ ⊗ᵐ η ↓ ≫ α⁻¹ _ _ _ ≫ ε ↓ ⊗ᵐ 𝟙 ↓)) (𝟙 ↓)
-  | relation_1_2: hom_equiv (υ (η ↑ ⊗ᵐ 𝟙 ↓ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ ε ↑)) (𝟙 ↓)
-  | relation_2_1: hom_equiv (υ (𝟙 ↑ ⊗ᵐ η ↑ ≫ α⁻¹ _ _ _ ≫ ε ↑ ⊗ᵐ 𝟙 ↑)) (𝟙 ↑)
-  | relation_2_2: hom_equiv (υ (η ↓ ⊗ᵐ 𝟙 ↑ ≫ α _ _ _ ≫ 𝟙 ↑ ⊗ᵐ ε ↓)) (𝟙 ↑)
-  | relation_3_1: hom_equiv (
-    υ (η ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑) ≫ _
-    ≫ υ (𝟙 ↑ ⊗ᵐ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑) /- ≫ _
-    ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ≫ _
-    ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓ ⊗ᵐ 𝟙 ↑ ≫ _
-    ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ ε ↓ ≫ ρ _-/
-  ) (
-    _
-  )
-#check 𝟙 ↑ ⊗ᵐ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑
-
-namespace Tangle
+    | relation_1_1: hom_equiv (ρ⁻¹ _ ≫ 𝟙 ↓ ⊗ᵐ η ↓ ≫ α⁻¹ _ _ _ ≫ ε ↓ ⊗ᵐ 𝟙 ↓ ≫ ℓ _) (𝟙 ↓)
+    | relation_1_2: hom_equiv (ℓ⁻¹ _ ≫ η ↑ ⊗ᵐ 𝟙 ↓ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ ε ↑ ≫ ρ _) (𝟙 ↓)
+    | relation_2_1: hom_equiv (ρ⁻¹ _ ≫ 𝟙 ↑ ⊗ᵐ η ↑ ≫ α⁻¹ _ _ _ ≫ ε ↑ ⊗ᵐ 𝟙 ↑ ≫ ℓ _) (𝟙 ↑)
+    | relation_2_2: hom_equiv (ℓ⁻¹ _ ≫ η ↓ ⊗ᵐ 𝟙 ↑ ≫ α _ _ _ ≫ 𝟙 ↑ ⊗ᵐ ε ↓ ≫ ρ _) (𝟙 ↑)
+    | relation_3_1: hom_equiv (              ℓ⁻¹ _ ≫ α⁻¹ _ _ _
+      ≫ η ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑                 ≫ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑   ≫ (α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ≫ (α _ _ _ ≫ 𝟙 _ ⊗ᵐ α _ _ _ ≫ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓ ⊗ᵐ 𝟙 ↑   ≫ ρ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ ε ↓                 ≫ ρ _
+    ) (                                      ρ⁻¹ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ η ↑                 ≫ α⁻¹ _ _ _ ≫ ρ⁻¹ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑ ⊗ᵐ 𝟙 ↑   ≫ (α _ _ _ ≫ 𝟙 _ ⊗ᵐ α⁻¹ _ _ _ ≫ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ≫ (α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑   ≫ ρ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑                 ≫ α _ _ _ ≫ ℓ _
+    )
+    | relation_3_2: hom_equiv (                ℓ⁻¹ _ ≫ α⁻¹ _ _ _
+      ≫ η ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑                   ≫ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑     ≫ (α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ≫ (α _ _ _ ≫ 𝟙 _ ⊗ᵐ α _ _ _ ≫ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓ ⊗ᵐ 𝟙 ↑     ≫ ρ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ ε ↓                   ≫ ρ _
+    ) (                                        ρ⁻¹ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ η ↑                   ≫ α⁻¹ _ _ _ ≫ ρ⁻¹ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑ ⊗ᵐ 𝟙 ↑     ≫ (α _ _ _ ≫ 𝟙 _ ⊗ᵐ α⁻¹ _ _ _ ≫ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑ ≫ (α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑     ≫ ρ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↑                   ≫ α _ _ _ ≫ ℓ _
+    )
+    | relation_4_1: hom_equiv (β ↓ ↓ ≫ β⁻¹ ↓ ↓) (𝟙 _)
+    | relation_4_2: hom_equiv (β⁻¹ ↓ ↓ ≫ β ↓ ↓) (𝟙 _)
+    | relation_5: hom_equiv
+      (α⁻¹ _ _ _ ≫ β ↓ ↓ ⊗ᵐ 𝟙 ↓ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ β ↓ ↓ ≫ α⁻¹ _ _ _ ≫ β ↓ ↓ ⊗ᵐ 𝟙 ↓)
+      (𝟙 ↓ ⊗ᵐ β ↓ ↓ ≫ α⁻¹ _ _ _ ≫ β ↓ ↓ ⊗ᵐ 𝟙 ↓ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ β ↓ ↓ ≫ α⁻¹ _ _ _)
+    | relation_6_1: hom_equiv (ρ⁻¹ _ ≫ 𝟙 ↓ ⊗ᵐ η ↑ ≫ α⁻¹ _ _ _ ≫ β ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ ε ↓ ≫ ρ _) (𝟙 ↓)
+    | relation_6_2: hom_equiv (ρ⁻¹ _ ≫ 𝟙 ↓ ⊗ᵐ η ↑ ≫ α⁻¹ _ _ _ ≫ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α _ _ _ ≫ 𝟙 ↓ ⊗ᵐ ε ↓ ≫ ρ _) (𝟙 ↓)
+    | relation_7_1: hom_equiv (  ℓ⁻¹ _ ⊗ᵐ 𝟙 _
+      ≫ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑     ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑   ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ ℓ _ ⊗ᵐ 𝟙 _
+    ) (𝟙 ↓ ⊗ᵐ 𝟙 ↑)
+    | relation_7_2: hom_equiv (  ℓ⁻¹ _ ⊗ᵐ 𝟙 _
+      ≫ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑   ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑     ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ ℓ _ ⊗ᵐ 𝟙 _
+    ) (𝟙 ↓ ⊗ᵐ 𝟙 ↑)
+    | relation_8_1: hom_equiv (  ρ⁻¹ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑     ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑   ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑
+      ≫ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓     ≫ ρ _
+    ) (𝟙 ↑ ⊗ᵐ 𝟙 ↓)
+    | relation_8_2: hom_equiv (  ρ⁻¹ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η ↑     ≫ α⁻¹ _ _ _ ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β⁻¹ ↓ ↓ ⊗ᵐ 𝟙 ↑ ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _
+      ≫ ε ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑
+      ≫ η ↓ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑     ≫ α _ _ _ ⊗ᵐ 𝟙 _
+      ≫ 𝟙 ↑ ⊗ᵐ β ↓ ↓ ⊗ᵐ 𝟙 ↑   ≫ α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ α _ _ _
+      ≫ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε ↓     ≫ ρ _
+    ) (𝟙 ↑ ⊗ᵐ 𝟙 ↓)
 
   @[instance] def setoid_hom (X Y): setoid (X ⟶ᵐ Y) := ⟨
     hom_equiv, ⟨hom_equiv.refl, hom_equiv.symm, hom_equiv.trans⟩
@@ -252,6 +190,7 @@ namespace Tangle
     triangle' := λ _ _, quotient.sound hom_equiv.triangle,
   }
 
+/-
   instance left_rigid_category: category_theory.left_rigid_category Tangle := {
     left_dual := λ X, {
       left_dual := X.rotate,
@@ -275,5 +214,6 @@ namespace Tangle
     hexagon_forward' := λ X Y Z, quotient.sound (hom_equiv.hexagon_forward),
     hexagon_reverse' := λ X Y Z, quotient.sound (hom_equiv.hexagon_reverse),
   }
+-/
 
 end Tangle
