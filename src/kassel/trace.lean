@@ -1,4 +1,6 @@
 import algebra.category.FinVect
+import linear_algebra.trace
+import linear_algebra.tensor_product
 open category_theory
 
 namespace kassel
@@ -13,5 +15,11 @@ noncomputable def trace {V} (f: V ⟶ V)
   ≫ (f ⊗ 𝟙 _)
   ≫ (β_ _ _).hom
   ≫ FinVect.FinVect_evaluation K V
+
+def lambda {U U' V V': FinVect K} (f: U ⟶ U') (g: V ⟶ V')
+  := tensor_product.map f g
+#check lambda
+
+#check linear_map.trace K
 
 end kassel
