@@ -4,6 +4,7 @@ import kassel.Tangle
 
 open category_theory
 
+open kassel
 namespace kassel
 
 universes v u
@@ -52,5 +53,36 @@ structure enhanced_R_matrix (V: C) :=
   (relation_3_2: trace_2 (c.inv ≫ (𝟙 V ⊗ μ.hom)) = 𝟙 V)
   (relation_4_1: (τ_ _ _ ≫ c.inv)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.hom ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
   (relation_4_2: (τ_ _ _ ≫ c.hom)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.inv ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
+
+variables (V: C) (F: functor Tangle C)
+
+example: F.map ⟦β ↓ ↓⟧ ≫ F.map ⟦β⁻¹ ↓ ↓⟧ = 𝟙 _ := begin
+  rw← F.map_comp',
+  have x := quotient.sound Tangle.hom_equiv.relation_4_1,
+end
+
+/-
+def functor_obj: Tangle → C
+  | Tangle.id := 𝟙_ C
+  | ↓ := V
+  | ↑ := Vᘁ
+  | (a ⊗ᵗ b) := functor_obj a ⊗ functor_obj b
+
+open Tangle.hom
+def functor_map: Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y)
+  | _ _ (𝟙 a) := 𝟙 (functor_obj V a)
+  | _ _ (comp f g) := functor_map f ≫ functor_map g
+  | _ _ (f ⊗ᵐ g) := functor_map f ⊗ functor_map g
+  | _ _ (α _ _ _) := (α_ _ _ _).hom
+  | _ _ (α⁻¹ _ _ _) := (α_ _ _ _).inv
+  | _ _ (η _) := (η_ _ _)
+
+def functor: Tangle ⥤ C := {
+  obj := functor_obj V,
+  map := begin
+    intros x y f,
+  end,
+}
+-/
 
 end kassel
