@@ -1,7 +1,6 @@
-import algebra.category.FinVect
-import category_theory.monoidal.braided
 import kassel.Tangle
 import kassel.rigid_appendix
+import category_theory.monoidal.braided
 
 open category_theory
 open kassel
@@ -66,7 +65,7 @@ example: F.map ⟦β ↓ ↓⟧ ≫ F.map ⟦β⁻¹ ↓ ↓⟧ = 𝟙 _ := begi
 end
 -/
 
-variables (V: C)
+variables (V: C) (R: enhanced_R_matrix V)
 
 @[simp] def functor_obj: Tangle → C
   | Tangle.id := 𝟙_ C
@@ -74,9 +73,7 @@ variables (V: C)
   | ↑ := Vᘁ
   | (a ⊗ᵗ b) := functor_obj a ⊗ functor_obj b
 
-open Tangle
-
-def functor_map (R: enhanced_R_matrix V): Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y)
+def functor_map: Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y)
   | _ _ (𝟙 a) := 𝟙 (functor_obj V a)
   | _ _ (f ≫ᵐ g) := functor_map f ≫ functor_map g
   | _ _ (f ⊗ᵐ g) := functor_map f ⊗ functor_map g
@@ -93,11 +90,35 @@ def functor_map (R: enhanced_R_matrix V): Π {X Y}, (X ⟶ᵐ Y) → (functor_ob
   | _ _ β := R.c.hom
   | _ _ β⁻¹ := R.c.inv
 
-def functor: Tangle ⥤ C := {
+lemma functor_map_well_defined {X Y}: ∀ (f g: X ⟶ᵐ Y), f ≈ g → functor_map V R f = functor_map V R g := begin
+  intros f g r, induction r,
+  { refl, },
+  { rw r_ih, },
+  { rw [r_ih_ᾰ, r_ih_ᾰ_1], },
+  { simp only [functor_map, r_ih_ᾰ, r_ih_ᾰ_1], },
+  { simp only [functor_map, category.id_comp'], },
+  { simp only [functor_map, category.comp_id'], },
+  { simp only [functor_map, category.assoc'], },
+  { simp only [functor_map, r_ih_ᾰ, r_ih_ᾰ_1], },
+  { simp only [functor_map, monoidal_category.tensor_id'], refl, },
+  { simp only [functor_map, monoidal_category.tensor_comp'], },
+  { simp only [functor_map, (α_ _ _ _).hom_inv_id'], refl, },
+  { simp only [functor_map, (α_ _ _ _).inv_hom_id'], refl, },
+  { simp only [functor_map, monoidal_category.associator_naturality'], },
+  { simp only [functor_map, (λ_ _).hom_inv_id'], refl, },
+  { simp only [functor_map, (λ_ _).inv_hom_id'], },
+  { simp only [functor_map, monoidal_category.left_unitor_naturality'], dsimp at *, simp at *, },
+  { simp only [functor_map, (ρ_ _).hom_inv_id'], refl, },
+  { simp only [functor_map, (ρ_ _).inv_hom_id'], },
+  { simp only [functor_map, monoidal_category.right_unitor_naturality'], dsimp at *, simp at *, },
+  { dsimp [functor_map], rw monoidal_category.pentagon', },
+  { simp only [functor_map, monoidal_category.triangle'], dsimp at *, simp at *, },
+  { simp only [functor_map],  }
+end 
+
+def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
   obj := functor_obj V,
-  map := begin
-    intros x y f,
-  end,
+  map := λ X Y f, quotient.lift_on' f (functor_map V R) (functor_map_well_defined V R)
 }
 
 end kassel

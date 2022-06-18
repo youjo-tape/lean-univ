@@ -1,6 +1,4 @@
-import category_theory.monoidal.rigid
-import category_theory.monoidal.braided
-import data.nat.basic
+import category_theory.monoidal.rigid.basic
 
 namespace kassel
 
