@@ -1,9 +1,9 @@
 import algebra.category.FinVect
 import category_theory.monoidal.braided
 import kassel.Tangle
+import kassel.rigid_appendix
 
 open category_theory
-
 open kassel
 namespace kassel
 
@@ -11,12 +11,13 @@ universes v u
 variables
   {C: Type u}
   [category.{v} C]
-  [monoidal_category C]
-  [right_rigid_category C]
-  [symmetric_category C]
+  [monoidal_category.{v} C]
+  [right_rigid_category.{v} C]
+  [right_pivotal_category.{v} C]
+  [braided_category.{v} C]
 
-def swap (V W: C) := (β_ V W).hom
-notation `τ_` := swap
+def flip (V W: C) := (β_ V W).hom
+notation `τ_` := flip
 
 def trace {V: C} (f: V ⟶ V) :=
   η_ _ _ ≫ (f ⊗ 𝟙 Vᘁ) ≫ τ_ _ _ ≫ ε_ _ _
@@ -54,28 +55,43 @@ structure enhanced_R_matrix (V: C) :=
   (relation_4_1: (τ_ _ _ ≫ c.inv)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.hom ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
   (relation_4_2: (τ_ _ _ ≫ c.hom)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.inv ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
 
-variables (V: C) (F: functor Tangle C)
+/-
+variables (V: C) (F: Tangle ⥤ C)
 
 example: F.map ⟦β ↓ ↓⟧ ≫ F.map ⟦β⁻¹ ↓ ↓⟧ = 𝟙 _ := begin
   rw← F.map_comp',
-  have x := quotient.sound Tangle.hom_equiv.relation_4_1,
+  have h: (⟦β ↓ ↓⟧ ≫ ⟦β⁻¹ ↓ ↓⟧: ↓ ⊗ᵗ ↓ ⟶ ↓ ⊗ᵗ ↓) = ⟦β ↓ ↓ ≫ᵐ β⁻¹ ↓ ↓⟧,
+  apply quotient.sound, exact Tangle.hom_equiv.refl _,
+  rw h,
 end
+-/
 
-/-
-def functor_obj: Tangle → C
+variables (V: C)
+
+@[simp] def functor_obj: Tangle → C
   | Tangle.id := 𝟙_ C
   | ↓ := V
   | ↑ := Vᘁ
   | (a ⊗ᵗ b) := functor_obj a ⊗ functor_obj b
 
-open Tangle.hom
-def functor_map: Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y)
+open Tangle
+
+def functor_map (R: enhanced_R_matrix V): Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y)
   | _ _ (𝟙 a) := 𝟙 (functor_obj V a)
-  | _ _ (comp f g) := functor_map f ≫ functor_map g
+  | _ _ (f ≫ᵐ g) := functor_map f ≫ functor_map g
   | _ _ (f ⊗ᵐ g) := functor_map f ⊗ functor_map g
   | _ _ (α _ _ _) := (α_ _ _ _).hom
   | _ _ (α⁻¹ _ _ _) := (α_ _ _ _).inv
-  | _ _ (η _) := (η_ _ _)
+  | _ _ (ℓ _) := (λ_ _).hom
+  | _ _ (ℓ⁻¹ _) := (λ_ _).inv
+  | _ _ (ρ _) := (ρ_ _).hom
+  | _ _ (ρ⁻¹ _) := (ρ_ _).inv
+  | _ _ η⁺ := by simp; exact η_ _ _
+  | _ _ η⁻ := by simp; exact η_ _ _ ≫ (𝟙 Vᘁ ⊗ ((φ_ _).hom ≫ R.μ.inv))
+  | _ _ ε⁺ := by simp; exact ε_ _ _
+  | _ _ ε⁻ := by simp; exact ((R.μ.hom ≫ (φ_ _).inv) ⊗ 𝟙 Vᘁ) ≫ ε_ Vᘁ Vᘁᘁ
+  | _ _ β := R.c.hom
+  | _ _ β⁻¹ := R.c.inv
 
 def functor: Tangle ⥤ C := {
   obj := functor_obj V,
@@ -83,6 +99,5 @@ def functor: Tangle ⥤ C := {
     intros x y f,
   end,
 }
--/
 
 end kassel
