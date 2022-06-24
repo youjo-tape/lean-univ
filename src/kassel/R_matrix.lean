@@ -83,12 +83,14 @@ def functor_map: Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y
   | _ _ (ℓ⁻¹ _) := (λ_ _).inv
   | _ _ (ρ _) := (ρ_ _).hom
   | _ _ (ρ⁻¹ _) := (ρ_ _).inv
-  | _ _ η⁺ := by simp; exact η_ _ _
-  | _ _ η⁻ := by simp; exact η_ _ _ ≫ (𝟙 Vᘁ ⊗ ((φ_ _).hom ≫ R.μ.inv))
-  | _ _ ε⁺ := by simp; exact ε_ _ _
-  | _ _ ε⁻ := by simp; exact ((R.μ.hom ≫ (φ_ _).inv) ⊗ 𝟙 Vᘁ) ≫ ε_ Vᘁ Vᘁᘁ
+  | _ _ η⁺ := η_⁺ V
+  | _ _ η⁻ := η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv)
+  | _ _ ε⁺ := ε_⁺ _
+  | _ _ ε⁻ := (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ V
   | _ _ β := R.c.hom
   | _ _ β⁻¹ := R.c.inv
+
+open category_theory.monoidal_category
 
 lemma functor_map_well_defined {X Y}: ∀ (f g: X ⟶ᵐ Y), f ≈ g → functor_map V R f = functor_map V R g := begin
   intros f g r, induction r,
@@ -113,7 +115,36 @@ lemma functor_map_well_defined {X Y}: ∀ (f g: X ⟶ᵐ Y), f ≈ g → functor
   { simp only [functor_map, monoidal_category.right_unitor_naturality'], dsimp at *, simp at *, },
   { dsimp [functor_map], rw monoidal_category.pentagon', },
   { simp only [functor_map, monoidal_category.triangle'], dsimp at *, simp at *, },
-  { simp only [functor_map],  }
+  {
+    simp [functor_map],
+    slice_lhs 4 5 { change (α_ V Vᘁ V).inv ≫ (α_ V Vᘁ V).hom, rw (α_ _ _ _).inv_hom_id, },
+    slice_lhs 4 5 { change 𝟙 ((functor_obj V ↓) ⊗ Vᘁ ⊗ V) ≫ (R.μ.hom ⊗ 𝟙 (Vᘁ ⊗ V)), rw category.id_comp, },
+    slice_lhs 3 4 { rw [←tensor_comp, id_comp_comp_id, tensor_comp, tensor_id V (_ ⊗ _), category.comp_id (R.μ.hom ⊗ 𝟙 Vᘁ ⊗ _)], },
+    slice_lhs 2 3 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
+    slice_lhs 3 4 { change (𝟙 V ⊗ 𝟙 Vᘁ ⊗ R.μ.inv) ≫ (α_ V Vᘁ V).inv, rw associator_inv_naturality, },
+    slice_lhs 4 5 { rw [←tensor_comp], change (𝟙 V ⊗ 𝟙 Vᘁ) ≫ ε_⁻ V ⊗ R.μ.inv ≫ 𝟙 V, rw [←id_comp_comp_id, tensor_comp, tensor_id, tensor_id, category.id_comp], },
+    slice_lhs 2 2 { rw [←category.id_comp (R.μ.hom ⊗ _), ←tensor_id, ←tensor_comp, id_comp_comp_id, tensor_comp], },
+    slice_lhs 5 5 { rw [←category.comp_id (_ ⊗ R.μ.inv), ←tensor_id, ←tensor_comp, ←id_comp_comp_id (R.μ.inv), tensor_comp], },
+    slice_lhs 3 5 { rw coevaluation_evaluation_rev, },
+    slice_lhs 2 3 { change (R.μ.hom ⊗ 𝟙 (𝟙_ C)) ≫ (ρ_ V).hom, rw right_unitor_naturality, },
+    slice_lhs 4 5 { rw ←left_unitor_inv_naturality, },
+    slice_lhs 3 4 { rw R.μ.hom_inv_id, },
+    change (ρ_ V).inv ≫ (ρ_ V).hom ≫ (𝟙 V ≫ (λ_ V).inv) ≫ (λ_ V).hom = 𝟙 V, simp,
+  },
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
+  sorry,
 end 
 
 def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
