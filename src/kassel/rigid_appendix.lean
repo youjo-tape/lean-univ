@@ -99,7 +99,7 @@ notation ε_⁻ := evaluation_rev
 lemma id_comp_comp_id {V₁ V₂: C} (f: V₁ ⟶ V₂): 𝟙 _ ≫ f = f ≫ 𝟙 _ := by simp
 
 lemma coevaluation_evaluation:
-  (𝟙 Vᘁ ⊗ η_⁺ _) ≫ (α_ _ _ _).inv ≫ (ε_⁺ _ ⊗ 𝟙 Vᘁ) = (ρ_ _).hom ≫ (λ_ _).inv := by simp
+  (𝟙 Vᘁ ⊗ η_⁺ _) ≫ (α_ _ _ _).inv ≫ (ε_⁺ _ ⊗ 𝟙 Vᘁ) = (ρ_ _).hom ≫ (λ_ _).inv := by simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev]
 
 lemma coevaluation_evaluation_rev:
   (𝟙 V ⊗ η_⁻ _) ≫ (α_ _ _ _).inv ≫ (ε_⁻ _ ⊗ 𝟙 V) = (ρ_ _).hom ≫ (λ_ _).inv := begin
@@ -112,4 +112,16 @@ lemma coevaluation_evaluation_rev:
   simp,
 end
 
+lemma evaluation_coevaluation:
+  (η_⁺ _ ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ ε_⁺ _) = (λ_ _).hom ≫ (ρ_ _).inv := by simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev]
+
+lemma evaluation_coevaluation_rev:
+  (η_⁻ _ ⊗ 𝟙 Vᘁ) ≫ (α_ _ _ _).hom ≫ (𝟙 Vᘁ ⊗ ε_⁻ _) = (λ_ _).hom ≫ (ρ_ _).inv := begin
+  simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev],
+  slice_lhs 3 4 { rw [←tensor_comp, ←tensor_comp, (φ_ _).hom_inv_id, category.comp_id, tensor_id, tensor_id], },
+  simp,
+end
+
+end
+end
 end kassel

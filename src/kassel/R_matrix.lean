@@ -1,6 +1,7 @@
 import kassel.Tangle
 import kassel.rigid_appendix
 import category_theory.monoidal.braided
+import algebra.category.FinVect
 
 open category_theory
 open kassel
@@ -42,11 +43,11 @@ structure enhanced_R_matrix (V: C) :=
   (relation_1:
        (𝟙 V ⊗ c.hom) ≫ (α_ _ _ _).inv
     ≫ (c.hom ⊗ 𝟙 V) ≫ (α_ _ _ _).hom
-    ≫ (𝟙 V ⊗ c.hom)
+    ≫ (𝟙 V ⊗ c.hom) ≫ (α_ _ _ _).inv
   =                    (α_ _ _ _).inv
     ≫ (c.hom ⊗ 𝟙 V) ≫ (α_ _ _ _).hom
     ≫ (𝟙 V ⊗ c.hom) ≫ (α_ _ _ _).inv
-    ≫ (c.hom ⊗ 𝟙 V) ≫ (α_ _ _ _).hom
+    ≫ (c.hom ⊗ 𝟙 V)
   )
   (relation_2: c.hom ≫ (μ.hom ⊗ μ.hom) = (μ.hom ⊗ μ.hom) ≫ c.inv)
   (relation_3_1: trace_2 (c.hom ≫ (𝟙 V ⊗ μ.hom)) = 𝟙 V)
@@ -92,6 +93,73 @@ def functor_map: Π {X Y}, (X ⟶ᵐ Y) → (functor_obj V X ⟶ functor_obj V Y
 
 open category_theory.monoidal_category
 
+namespace aux
+
+  lemma functor_map_well_defined_1_1:
+  functor_map V R (ρ⁻¹ _ ≫ᵐ 𝟙 _ ⊗ᵐ η⁻ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ ε⁻ ⊗ᵐ 𝟙 _ ≫ᵐ ℓ _) = functor_map V R (𝟙 _) := begin
+    simp [functor_map],
+    change (ρ_ V).inv ≫ (𝟙 V ⊗ η_⁻ V) ≫ (𝟙 V ⊗ 𝟙 Vᘁ ⊗ R.μ.inv) ≫ (α_ V Vᘁ V).inv ≫ (α_ V Vᘁ V).hom ≫ (R.μ.hom ⊗ 𝟙 (Vᘁ ⊗ V)) ≫ (α_ V Vᘁ V).inv ≫ (ε_⁻ V ⊗ 𝟙 V) ≫ (λ_ V).hom = 𝟙 V,
+    slice_lhs 4 5 { rw (α_ _ _ _).inv_hom_id, },
+    slice_lhs 4 5 { rw category.id_comp, },
+    slice_lhs 3 4 { rw [←tensor_comp, id_comp_comp_id, tensor_comp, tensor_id V (_ ⊗ _), category.comp_id (R.μ.hom ⊗ 𝟙 Vᘁ ⊗ _)], },
+    slice_lhs 2 3 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
+    slice_lhs 3 4 { rw associator_inv_naturality, },
+    slice_lhs 4 5 { rw [←tensor_comp], change (𝟙 V ⊗ 𝟙 Vᘁ) ≫ ε_⁻ V ⊗ R.μ.inv ≫ 𝟙 V, rw [←id_comp_comp_id, tensor_comp, tensor_id, tensor_id, category.id_comp], },
+    slice_lhs 2 2 { rw [←category.id_comp (R.μ.hom ⊗ _), ←tensor_id, ←tensor_comp, id_comp_comp_id, tensor_comp], },
+    slice_lhs 5 5 { rw [←category.comp_id (_ ⊗ R.μ.inv), ←tensor_id, ←tensor_comp, ←id_comp_comp_id (R.μ.inv), tensor_comp], },
+    slice_lhs 3 5 { rw coevaluation_evaluation_rev, },
+    slice_lhs 2 3 { change (R.μ.hom ⊗ 𝟙 (𝟙_ C)) ≫ (ρ_ V).hom, rw right_unitor_naturality, },
+    slice_lhs 4 5 { rw ←left_unitor_inv_naturality, },
+    tidy,
+  end
+  lemma functor_map_well_defined_1_2:
+  functor_map V R (ℓ⁻¹ _ ≫ᵐ η⁺ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ ε⁺ ≫ᵐ ρ _) = functor_map V R (𝟙 _) := begin
+    simp [functor_map],
+    slice_lhs 2 4 { change (η_⁺ V ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ ε_⁺ V), rw evaluation_coevaluation, },
+    tidy,
+  end
+  lemma functor_map_well_defined_2_1:
+  functor_map V R (ρ⁻¹ _ ≫ᵐ 𝟙 _ ⊗ᵐ η⁺ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ ε⁺ ⊗ᵐ 𝟙 _ ≫ᵐ ℓ _) = functor_map V R (𝟙 _) := begin
+    simp [functor_map],
+    slice_lhs 2 4 { change (𝟙 Vᘁ ⊗ η_⁺ _) ≫ (α_ _ _ _).inv ≫ (ε_⁺ _ ⊗ 𝟙 Vᘁ), rw coevaluation_evaluation, },
+    tidy,
+  end
+  lemma functor_map_well_defined_2_2:
+  functor_map V R (ℓ⁻¹ _ ≫ᵐ η⁻ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ ε⁻ ≫ᵐ ρ _) = functor_map V R (𝟙 _) := begin
+    simp [functor_map],
+    change (λ_ Vᘁ).inv ≫ (η_⁻ V ⊗ 𝟙 Vᘁ) ≫ (α_ Vᘁ V Vᘁ).hom ≫ (𝟙 Vᘁ ⊗ R.μ.inv ⊗ 𝟙 Vᘁ) ≫ (α_ Vᘁ V Vᘁ).inv ≫ (α_ Vᘁ V Vᘁ).hom ≫ (𝟙 Vᘁ ⊗ R.μ.hom ⊗ 𝟙 Vᘁ) ≫ (𝟙 Vᘁ ⊗ ε_⁻ V) ≫ (ρ_ Vᘁ).hom = 𝟙 Vᘁ,
+    slice_lhs 5 6 { rw (α_ _ _ _).inv_hom_id, },
+    slice_lhs 5 6 { rw category.id_comp, },
+    slice_lhs 4 5 { rw [←tensor_comp, ←tensor_comp, R.μ.inv_hom_id, category.comp_id, tensor_id, tensor_id], },
+    slice_lhs 4 5 { rw category.id_comp, },
+    slice_lhs 2 4 { rw evaluation_coevaluation_rev, },
+    tidy,
+  end
+  lemma functor_map_well_defined_3 (b: ↓ ⊗ᵗ ↓ ⟶ᵐ ↓ ⊗ᵗ ↓):
+  functor_map V R (ℓ⁻¹ _ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 ↑ ⊗ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ b ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ α _ _ _ ≫ᵐ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ⊗ᵐ 𝟙 _ ≫ᵐ ρ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ≫ᵐ ρ _) = functor_map V R (ρ⁻¹ _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ η⁺ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ η⁺ ⊗ᵐ 𝟙 _ ≫ᵐ (α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ α⁻¹ _ _ _ ≫ᵐ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ b ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α⁻¹ _ _ _ ≫ᵐ α _ _ _ ⊗ᵐ 𝟙 _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ ε⁺ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ρ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ε⁺ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ ℓ _) := begin
+    simp only [functor_map],
+    change ((((((((((((λ_ _).inv ≫ (α_ _ _ _).inv) ≫ ((η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((ρ_ _).inv ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv)) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((α_ _ _ _).inv ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ functor_map V R b) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).hom ≫ (𝟙 (Vᘁ ⊗ Vᘁ) ⊗ (α_ _ _ _).hom)) ≫ (α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 V) ⊗ (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ _) ⊗ 𝟙 Vᘁ)) ≫ ((ρ_ _).hom ⊗ 𝟙 Vᘁ)) ≫ (α_ _ _ _).hom) ≫ ((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ _)) ≫ (ρ_ _).hom = ((((((((((((ρ_ _).inv ≫ ((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ η_⁺ V)) ≫ (α_ _ _ _).inv) ≫ ((ρ_ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 V) ⊗ η_⁺ _) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).hom ≫ (𝟙 (Vᘁ ⊗ Vᘁ) ⊗ (α_ _ _ _).inv)) ≫ (α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ functor_map V R b) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).inv ≫ ((α_ _ _ _).hom ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ ε_⁺ _) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((ρ_ _).hom ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((ε_⁺ _ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (α_ _ _ _).hom) ≫ (λ_ _).hom,
+    slice_lhs 5 6 {  },
+    sorry,
+  end
+  lemma functor_map_well_defined_4_1: functor_map V R (β ≫ᵐ β⁻¹) = functor_map V R (𝟙 (↓ ⊗ᵗ ↓)) := by simp [functor_map]
+  lemma functor_map_well_defined_4_2: functor_map V R (β⁻¹ ≫ᵐ β) = functor_map V R (𝟙 (↓ ⊗ᵗ ↓)) := by simp [functor_map]
+  lemma functor_map_well_defined_5:
+  functor_map V R (α⁻¹ _ _ _ ≫ᵐ β ⊗ᵐ 𝟙 ↓ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 ↓ ⊗ᵐ β ≫ᵐ α⁻¹ _ _ _ ≫ᵐ β ⊗ᵐ 𝟙 _) = functor_map V R (𝟙 ↓ ⊗ᵐ β ≫ᵐ α⁻¹ _ _ _ ≫ᵐ β ⊗ᵐ 𝟙 ↓ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 ↓ ⊗ᵐ β ≫ᵐ α⁻¹ _ _ _) := begin
+    simp [functor_map],
+    change (α_ _ _ _).inv ≫ (R.c.hom ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ R.c.hom) ≫ (α_ _ _ _).inv ≫ (R.c.hom ⊗ 𝟙 V) = (𝟙 V ⊗ R.c.hom) ≫ (α_ _ _ _).inv ≫ (R.c.hom ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ R.c.hom) ≫ (α_ _ _ _).inv,
+    exact R.relation_1.symm,
+  end
+  lemma functor_map_well_defined_6_1:
+  functor_map V R (ρ⁻¹ ↓ ≫ᵐ 𝟙 ↓ ⊗ᵐ η⁺ ≫ᵐ α⁻¹ ↓ ↓ ↑ ≫ᵐ β ⊗ᵐ 𝟙 ↑ ≫ᵐ α ↓ ↓ ↑ ≫ᵐ 𝟙 ↓ ⊗ᵐ ε⁻ ≫ᵐ ρ ↓) = functor_map V R (𝟙 ↓) := begin
+    simp [functor_map],
+    change (ρ_ _).inv ≫ (𝟙 V ⊗ η_⁺ V) ≫ (α_ _ _ _).inv ≫ (R.c.hom ⊗ 𝟙 Vᘁ) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ R.μ.hom ⊗ 𝟙 Vᘁ) ≫ (𝟙 V ⊗ ε_⁻ V) ≫ (ρ_ _).hom = 𝟙 V,
+    have h: trace_2 (R.c.hom ≫ (𝟙 V ⊗ R.μ.hom)) = (ρ_ _).inv ≫ (𝟙 V ⊗ η_⁺ V) ≫ (α_ _ _ _).inv ≫ (R.c.hom ⊗ 𝟙 Vᘁ) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ R.μ.hom ⊗ 𝟙 Vᘁ) ≫ (𝟙 V ⊗ ε_⁻ V) ≫ (ρ_ _).hom := begin
+      simp [functor_map, trace_2, coevaluation, evaluation, evaluation_rev],
+    end
+  end
+end aux
+
 lemma functor_map_well_defined {X Y}: ∀ (f g: X ⟶ᵐ Y), f ≈ g → functor_map V R f = functor_map V R g := begin
   intros f g r, induction r,
   { refl, },
@@ -115,41 +183,31 @@ lemma functor_map_well_defined {X Y}: ∀ (f g: X ⟶ᵐ Y), f ≈ g → functor
   { simp only [functor_map, monoidal_category.right_unitor_naturality'], dsimp at *, simp at *, },
   { dsimp [functor_map], rw monoidal_category.pentagon', },
   { simp only [functor_map, monoidal_category.triangle'], dsimp at *, simp at *, },
-  {
-    simp [functor_map],
-    slice_lhs 4 5 { change (α_ V Vᘁ V).inv ≫ (α_ V Vᘁ V).hom, rw (α_ _ _ _).inv_hom_id, },
-    slice_lhs 4 5 { change 𝟙 ((functor_obj V ↓) ⊗ Vᘁ ⊗ V) ≫ (R.μ.hom ⊗ 𝟙 (Vᘁ ⊗ V)), rw category.id_comp, },
-    slice_lhs 3 4 { rw [←tensor_comp, id_comp_comp_id, tensor_comp, tensor_id V (_ ⊗ _), category.comp_id (R.μ.hom ⊗ 𝟙 Vᘁ ⊗ _)], },
-    slice_lhs 2 3 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
-    slice_lhs 3 4 { change (𝟙 V ⊗ 𝟙 Vᘁ ⊗ R.μ.inv) ≫ (α_ V Vᘁ V).inv, rw associator_inv_naturality, },
-    slice_lhs 4 5 { rw [←tensor_comp], change (𝟙 V ⊗ 𝟙 Vᘁ) ≫ ε_⁻ V ⊗ R.μ.inv ≫ 𝟙 V, rw [←id_comp_comp_id, tensor_comp, tensor_id, tensor_id, category.id_comp], },
-    slice_lhs 2 2 { rw [←category.id_comp (R.μ.hom ⊗ _), ←tensor_id, ←tensor_comp, id_comp_comp_id, tensor_comp], },
-    slice_lhs 5 5 { rw [←category.comp_id (_ ⊗ R.μ.inv), ←tensor_id, ←tensor_comp, ←id_comp_comp_id (R.μ.inv), tensor_comp], },
-    slice_lhs 3 5 { rw coevaluation_evaluation_rev, },
-    slice_lhs 2 3 { change (R.μ.hom ⊗ 𝟙 (𝟙_ C)) ≫ (ρ_ V).hom, rw right_unitor_naturality, },
-    slice_lhs 4 5 { rw ←left_unitor_inv_naturality, },
-    slice_lhs 3 4 { rw R.μ.hom_inv_id, },
-    change (ρ_ V).inv ≫ (ρ_ V).hom ≫ (𝟙 V ≫ (λ_ V).inv) ≫ (λ_ V).hom = 𝟙 V, simp,
-  },
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-  sorry,
-end 
+  exact aux.functor_map_well_defined_1_1 _ _,
+  exact aux.functor_map_well_defined_1_2 _ _,
+  exact aux.functor_map_well_defined_2_1 _ _,
+  exact aux.functor_map_well_defined_2_2 _ _,
+  exact aux.functor_map_well_defined_3 _ _ β,
+  exact aux.functor_map_well_defined_3 _ _ β⁻¹,
+  exact aux.functor_map_well_defined_4_1 _ _,
+  exact aux.functor_map_well_defined_4_2 _ _,
+  exact aux.functor_map_well_defined_5 _ _,
+  exact aux.functor_map_well_defined_6_1 _ _,
+  repeat { sorry, },
+end
 
 def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
   obj := functor_obj V,
   map := λ X Y f, quotient.lift_on' f (functor_map V R) (functor_map_well_defined V R)
 }
+
+variables
+  (K: Type) [field K]
+  (q: units K)
+
+def jones_c (m: ℕ): matrix (fin m) (fin m) (matrix (fin m) (fin m) K) := λ i j,
+  if (i = j) then (λ i' j', if (i' = i ∧ j' = j) then q^(-m: ℤ) * q else 0)
+  else if (i < j) then (λ i' j', if (i' = j ∧ j' = i) then q^(-m: ℤ) else 0)
+  else (λ i' j', if (i' = j ∧ j' = i) then q^(-m: ℤ) else if (i' = i ∧ j' = j) then q^(-m: ℤ) * (q - q^(-1: ℤ)) else 0)
 
 end kassel
