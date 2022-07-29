@@ -1,7 +1,7 @@
 import kassel.Tangle
-import kassel.rigid_appendix
 import category_theory.monoidal.braided
 import algebra.category.FinVect
+import kassel.rigid_appendix
 
 open category_theory
 open kassel
@@ -133,11 +133,16 @@ namespace aux
     slice_lhs 2 4 { rw evaluation_coevaluation_rev, },
     tidy,
   end
+
+  lemma functor_map_well_defined_3_left (b: ↓ ⊗ᵗ ↓ ⟶ᵐ ↓ ⊗ᵗ ↓):
+  functor_map V R (ℓ⁻¹ _ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 ↑ ⊗ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ b ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ α _ _ _ ≫ᵐ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ⊗ᵐ 𝟙 _ ≫ᵐ ρ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ≫ᵐ ρ _) = right_adjoint_mate (functor_map V R b) := begin
+    simp only [functor_map, category.assoc, tensor_comp_id, comp_tensor_id],
+    change (λ_ _).inv ≫ (α_ _ _ _).inv ≫ ((η_⁻ _ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ (((𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((((ρ_ _).inv ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((((𝟙 Vᘁ ⊗ η_⁻ _) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((((α_ _ _ _).inv ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ (((α_ _ _ _).hom ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ functor_map V R b) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((α_ _ (V ⊗ V) _).hom ⊗ 𝟙 Vᘁ) ≫ ((𝟙 (Vᘁ ⊗ Vᘁ) ⊗ (α_ _ _ _).hom) ⊗ 𝟙 Vᘁ) ≫ ((α_ _ _ _).inv ⊗ 𝟙 Vᘁ) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 V) ⊗ R.μ.hom ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ) ≫ ((𝟙 ((Vᘁ ⊗ Vᘁ) ⊗ V) ⊗ ε_⁻ _) ⊗ 𝟙 Vᘁ) ≫ ((ρ_ _).hom ⊗ 𝟙 Vᘁ) ≫ (α_ _ _ _).hom ≫ ((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ R.μ.hom ⊗ 𝟙 Vᘁ)≫ (𝟙 (Vᘁ ⊗ Vᘁ) ⊗ ε_⁻ _) ≫ (ρ_ _).hom = 𝟙 (Vᘁ ⊗ Vᘁ),
+  end
+
   lemma functor_map_well_defined_3 (b: ↓ ⊗ᵗ ↓ ⟶ᵐ ↓ ⊗ᵗ ↓):
   functor_map V R (ℓ⁻¹ _ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 ↑ ⊗ᵐ η⁻ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α⁻¹ _ _ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ b ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ α _ _ _ ≫ᵐ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ⊗ᵐ 𝟙 _ ≫ᵐ ρ _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ ε⁻ ≫ᵐ ρ _) = functor_map V R (ρ⁻¹ _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ η⁺ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ ρ⁻¹ _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ η⁺ ⊗ᵐ 𝟙 _ ≫ᵐ (α _ _ _ ≫ᵐ 𝟙 _ ⊗ᵐ α⁻¹ _ _ _ ≫ᵐ α⁻¹ _ _ _) ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ b ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ (α⁻¹ _ _ _ ≫ᵐ α _ _ _ ⊗ᵐ 𝟙 _) ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ 𝟙 _ ⊗ᵐ ε⁺ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ρ _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ ε⁺ ⊗ᵐ 𝟙 _ ⊗ᵐ 𝟙 _ ≫ᵐ α _ _ _ ≫ᵐ ℓ _) := begin
-    simp only [functor_map],
-    change ((((((((((((λ_ _).inv ≫ (α_ _ _ _).inv) ≫ ((η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((ρ_ _).inv ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv)) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((α_ _ _ _).inv ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ functor_map V R b) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).hom ≫ (𝟙 (Vᘁ ⊗ Vᘁ) ⊗ (α_ _ _ _).hom)) ≫ (α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 V) ⊗ (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ _) ⊗ 𝟙 Vᘁ)) ≫ ((ρ_ _).hom ⊗ 𝟙 Vᘁ)) ≫ (α_ _ _ _).hom) ≫ ((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ _)) ≫ (ρ_ _).hom = ((((((((((((ρ_ _).inv ≫ ((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ η_⁺ V)) ≫ (α_ _ _ _).inv) ≫ ((ρ_ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 V) ⊗ η_⁺ _) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).hom ≫ (𝟙 (Vᘁ ⊗ Vᘁ) ⊗ (α_ _ _ _).inv)) ≫ (α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ 𝟙 Vᘁ) ⊗ functor_map V R b) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (((α_ _ _ _).inv ≫ ((α_ _ _ _).hom ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((𝟙 Vᘁ ⊗ ε_⁺ _) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((((ρ_ _).hom ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ ((ε_⁺ _ ⊗ 𝟙 Vᘁ) ⊗ 𝟙 Vᘁ)) ≫ (α_ _ _ _).hom) ≫ (λ_ _).hom,
-    slice_lhs 5 6 {  },
+    rw functor_map_well_defined_3_left,
     sorry,
   end
   lemma functor_map_well_defined_4_1: functor_map V R (β ≫ᵐ β⁻¹) = functor_map V R (𝟙 (↓ ⊗ᵗ ↓)) := by simp [functor_map]
@@ -166,9 +171,24 @@ namespace aux
   end
   lemma functor_map_well_defined_7_1:
   functor_map V R (ℓ⁻¹ _ ⊗ᵐ 𝟙 ↑ ≫ᵐ η⁻ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ≫ᵐ α _ _ _ ⊗ᵐ 𝟙 ↑ ≫ᵐ 𝟙 ↑ ⊗ᵐ β⁻¹ ⊗ᵐ 𝟙 ↑ ≫ᵐ α⁻¹ _ _ _ ⊗ᵐ 𝟙 ↑ ≫ᵐ α _ _ _ ≫ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ ε⁻ ≫ᵐ 𝟙 ↑ ⊗ᵐ 𝟙 ↓ ⊗ᵐ η⁺ ≫ᵐ α⁻¹ _ _ _ ≫ᵐ α _ _ _ ⊗ᵐ 𝟙 ↑ ≫ᵐ 𝟙 ↑ ⊗ᵐ β ⊗ᵐ 𝟙 ↑ ≫ᵐ α⁻¹ _ _ _ ⊗ᵐ 𝟙 ↑ ≫ᵐ ε⁺ ⊗ᵐ 𝟙 ↓ ⊗ᵐ 𝟙 ↑ ≫ᵐ ℓ _ ⊗ᵐ 𝟙 ↑) = functor_map V R (𝟙 ↓ ⊗ᵐ 𝟙 ↑) := begin
-    simp only [functor_map],
-    change ((((((((((((((λ_ V).inv ⊗ 𝟙 Vᘁ) ≫ ((η_⁻ _ ≫ (𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ)) ≫ ((α_ _ _ _).hom ⊗ 𝟙 Vᘁ)) ≫ ((𝟙 Vᘁ ⊗ R.c.inv) ⊗ 𝟙 Vᘁ)) ≫ ((α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ (α_ _ _ _).hom) ≫ ((𝟙 Vᘁ ⊗ 𝟙 V) ⊗ (R.μ.hom ⊗ 𝟙 Vᘁ) ≫ ε_⁻ _)) ≫ ((𝟙 Vᘁ ⊗ 𝟙 V) ⊗ η_⁺ _)) ≫ (α_ _ _ _).inv) ≫ ((α_ _ _ _).hom ⊗ 𝟙 Vᘁ)) ≫ ((𝟙 Vᘁ ⊗ R.c.hom) ⊗ 𝟙 Vᘁ)) ≫ ((α_ _ _ _).inv ⊗ 𝟙 Vᘁ)) ≫ ((ε_⁺ _ ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ)) ≫ ((λ_ _).hom ⊗ 𝟙 Vᘁ) = 𝟙 V ⊗ 𝟙 Vᘁ,
-    slice_lhs 13 13 {  },
+    simp only [functor_map, category.assoc, tensor_comp_id, comp_tensor_id],
+    change ((λ_ _).inv ⊗ 𝟙 Vᘁ)
+    ≫ ((η_⁻ V ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ)
+    ≫ (((𝟙 Vᘁ ⊗ R.μ.inv) ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ)
+    ≫ ((α_ _ _ _).hom ⊗ 𝟙 Vᘁ)
+    ≫ ((𝟙 Vᘁ ⊗ R.c.inv) ⊗ 𝟙 Vᘁ)
+    ≫ ((α_ _ _ _).inv ⊗ 𝟙 Vᘁ)
+    ≫ (α_ _ _ _).hom
+    ≫ ((𝟙 Vᘁ ⊗ 𝟙 V) ⊗ R.μ.hom ⊗ 𝟙 Vᘁ)
+    ≫ (𝟙 (Vᘁ ⊗ V) ⊗ ε_⁻ V)
+    ≫ ((𝟙 Vᘁ ⊗ 𝟙 V) ⊗ η_⁺ V)
+    ≫ (α_ _ _ _).inv
+    ≫ ((α_ _ _ _).hom ⊗ 𝟙 Vᘁ)
+    ≫ ((𝟙 Vᘁ ⊗ R.c.hom) ⊗ 𝟙 Vᘁ)
+    ≫ ((α_ _ _ _).inv ⊗ 𝟙 Vᘁ)
+    ≫ ((ε_⁺ V ⊗ 𝟙 V) ⊗ 𝟙 Vᘁ)
+    ≫ ((λ_ _).hom ⊗ 𝟙 Vᘁ)
+    = 𝟙 V ⊗ 𝟙 Vᘁ,
   end
 end aux
 
@@ -219,6 +239,9 @@ def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
 
 variables {K: Type} [field K]
 
+@[simp] def linear_map_smul (V: FinVect K) (s: K): V →ₗ[K] V :=
+  is_linear_map.mk' (λ x, s • x) (is_linear_map.is_linear_map_smul s)
+
 @[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
   change finite_dimensional K (bool → K),
   exact finite_dimensional.finite_dimensional_pi K,
@@ -226,38 +249,54 @@ end⟩
 
 variables (q: Kˣ)
 include q
+
 open_locale tensor_product
 
-def jones_c (m: ℕ): matrix (fin m) (fin m) (matrix (fin m) (fin m) K) := λ i j,
-  if (i = j) then (λ i' j', if (i' = i ∧ j' = j) then q^(-m: ℤ) * q else 0)
-  else if (i < j) then (λ i' j', if (i' = j ∧ j' = i) then q^(-m: ℤ) else 0)
-  else (λ i' j', if (i' = j ∧ j' = i) then q^(-m: ℤ) else if (i' = i ∧ j' = j) then q^(-m: ℤ) * (q - q^(-1: ℤ)) else 0)
-
-def jones_R_aux : Π (i j : bool), (bool → K) ⊗[K] (bool → K)
-| tt tt := q⁻¹ • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 tt 1)
-| tt ff := (q⁻¹)^2 • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1) +
-            (q⁻¹ - (q⁻¹)^3 : K) • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
-| ff tt := (q⁻¹)^2 • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
+@[simp] def jones_R_aux : Π (i j: bool), (bool → K) ⊗[K] (bool → K)
 | ff ff := q⁻¹ • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 ff 1)
+| ff tt := (q⁻¹)^2 • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
+| tt ff := (q⁻¹)^2 • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1) + (q⁻¹ - (q⁻¹)^3 : K) • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
+| tt tt := q⁻¹ • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 tt 1)
 
-def jone_R_aux' : bool × bool → (bool → K) ⊗[K] (bool → K) :=
-λ ⟨i, j⟩, jones_R_aux q i j
+@[simp] def jones_R_inv_aux: Π (i j: bool), (bool → K) ⊗[K] (bool → K)
+| ff ff := q • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 ff 1)
+| ff tt := (q - q^3 : K) • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1) + q^2 • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
+| tt ff := q^2 • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1)
+| tt tt := q • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 tt 1)
 
-noncomputable def jones_R : (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
-basis.constr (basis.tensor_product (pi.basis_fun K bool) (pi.basis_fun K bool)) K (jone_R_aux' q)
+def jones_R_aux': bool × bool → (bool → K) ⊗[K] (bool → K) := λ ⟨i, j⟩, jones_R_aux q i j 
+def jones_R_inv_aux': bool × bool → (bool → K) ⊗[K] (bool → K) := λ ⟨i, j⟩, jones_R_inv_aux q i j 
 
-variables [right_pivotal_category (FinVect K)]
+noncomputable def jones_R: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
+  ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_aux' q)
 
-noncomputable instance jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
+noncomputable def jones_R_inv: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
+  ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_inv_aux' q)
+
+lemma jones_R_hom_inv_id: jones_R q ∘ₗ jones_R_inv q = linear_map.id := begin
+  have h := basis.constr_eq ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) K,
+  -- apply tensor_product.ext', intros x y, rw [jones_R, jones_R_inv], rw ←basis.constr_comp, rw basis.constr_comp,
+end
+
+noncomputable def jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := {
     hom := jones_R q,
-    inv := sorry
+    inv := jones_R_inv q,
+    hom_inv_id' := begin
+      simp [jones_R, jones_R_inv, jones_R_aux, jones_R_inv_aux],
+      sorry,
+    end,
+    inv_hom_id' := sorry
   },
   μ := {
-    hom := sorry,
-    inv := sorry
+    hom := linear_map_smul V₂ ((q⁻¹)^2: K),
+    inv := linear_map_smul V₂ (q^2: K),
+    hom_inv_id' := by tidy,
+    inv_hom_id' := by tidy
   },
-  relation_1 := sorry,
+  relation_1 := begin
+    sorry,
+  end,
   relation_2 := sorry,
   relation_3_1 := sorry,
   relation_3_2 := sorry,
