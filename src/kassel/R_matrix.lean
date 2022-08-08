@@ -273,10 +273,46 @@ noncomputable def jones_R: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → 
 noncomputable def jones_R_inv: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
   ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_inv_aux' q)
 
+lemma aaa (x): (jones_R_inv q) x = x := begin
+  rw jones_R_inv,
+  rw basis.constr_apply,
+  rw jones_R_inv_aux', simp, 
+end
+
 lemma jones_R_hom_inv_id: jones_R q ∘ₗ jones_R_inv q = linear_map.id := begin
-  have h := basis.constr_eq ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) K,
+  have h := @basis.constr_eq _ _ _ _ _ _ _ _ _
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    K _ _ _
+    (jones_R q ∘ jones_R_inv_aux' q)
+    linear_map.id 
+    (_),
+    {
+
+      sorry,
+    },
+    {
+      rintro ⟨x, y⟩, simp,
+      cases x, cases y,
+      {
+        simp [jones_R_inv_aux', jones_R],
+        -- have h := @basis.constr_eq _ _ _ _ _ _ _ _ _
+        sorry,
+      },
+    }
+    
+    
+    --((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) K,
   -- apply tensor_product.ext', intros x y, rw [jones_R, jones_R_inv], rw ←basis.constr_comp, rw basis.constr_comp,
 end
+
+/-
+  have h' := @basis.constr_eq _ _ _ _ _ _ _ _ _
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    K _ _ _
+    (jones_R q ∘ jones_R_inv_aux' q)
+    _
+    (_),
+-/
 
 noncomputable def jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := {
