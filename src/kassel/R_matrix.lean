@@ -408,11 +408,15 @@ noncomputable def jones_R: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → 
 noncomputable def jones_R_inv: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
   ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_inv_aux' q)
 
-#check tensor_product.ext
-
 lemma jones_R_hom_inv_id: jones_R q ∘ₗ jones_R_inv q = linear_map.id := begin
   apply ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).ext,
-  
+  rintro ⟨x, y⟩,
+  simp, -- simp [linear_map.std_basis_apply],
+  rw jones_R_inv,
+  rw basis.constr_apply, -- finsupp.sum を具体的な和に書き下す方法を探している
+
+  simp,
+
   have h := @basis.constr_eq _ _ _ _ _ _ _ _ _
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
     K _ _ _
