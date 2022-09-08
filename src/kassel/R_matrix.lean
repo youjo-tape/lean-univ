@@ -2,6 +2,7 @@ import kassel.Tangle
 import category_theory.monoidal.braided
 import algebra.category.FinVect
 import kassel.rigid_appendix
+import tactic.field_simp
 
 open category_theory category_theory.monoidal_category
 open kassel
@@ -372,7 +373,12 @@ def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
   map := λ X Y f, quotient.lift_on' f (functor_map V R) (functor_map_well_defined V R)
 }
 
+lemma elems_bool2: fintype.elems (bool × bool) = {(tt, tt), (tt, ff), (ff, tt), (ff, ff)} := rfl
+
 variables {K: Type} [field K]
+
+lemma pow_mul_single (a: K) (n: ℕ): a ^ n * a = a ^ (n + 1) := by nth_rewrite 1 ←pow_one a; rw pow_add
+lemma single_mul_pow (a: K) (n: ℕ): a * a ^ n = a ^ (1 + n) := by nth_rewrite 0 ←pow_one a; rw pow_add
 
 @[simp] def linear_map_smul (V: FinVect K) (s: K): V →ₗ[K] V :=
   is_linear_map.mk' (λ x, s • x) (is_linear_map.is_linear_map_smul s)
@@ -383,82 +389,75 @@ variables {K: Type} [field K]
 end⟩
 
 variables (q: Kˣ)
-include q
 
-open_locale tensor_product
+@[simp] def jones_R_matrix: matrix (bool × bool) (bool × bool) K 
+  | (ff, ff) (ff, ff) := q⁻¹
+  | (ff, tt) (tt, ff) := (q⁻¹)^2
+  | (tt, ff) (ff, tt) := (q⁻¹)^2
+  | (tt, ff) (tt, ff) := q⁻¹ + -(q⁻¹)^3
+  | (tt, tt) (tt, tt) := q⁻¹
+  | _ _ := 0
 
-@[simp] def jones_R_aux : Π (i j: bool), (bool → K) ⊗[K] (bool → K)
-| ff ff := q⁻¹ • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 ff 1)
-| ff tt := (q⁻¹)^2 • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
-| tt ff := (q⁻¹)^2 • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1) + (q⁻¹ - (q⁻¹)^3 : K) • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
-| tt tt := q⁻¹ • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 tt 1)
+@[simp] def jones_R_matrix_inv: matrix (bool × bool) (bool × bool) K
+  | (ff, ff) (ff, ff) := q
+  | (ff, tt) (ff, tt) := q + -q^3
+  | (ff, tt) (tt, ff) := q^2
+  | (tt, ff) (ff, tt) := q^2
+  | (tt, tt) (tt, tt) := q
+  | _ _ := 0
 
-@[simp] def jones_R_inv_aux: Π (i j: bool), (bool → K) ⊗[K] (bool → K)
-| ff ff := q • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 ff 1)
-| ff tt := (q - q^3 : K) • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1) + q^2 • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 ff 1)
-| tt ff := q^2 • (function.update 0 ff 1) ⊗ₜ[K] (function.update 0 tt 1)
-| tt tt := q • (function.update 0 tt 1) ⊗ₜ[K] (function.update 0 tt 1)
+noncomputable def jones_R_hom :=
+  matrix.to_lin
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    (jones_R_matrix q)
 
-def jones_R_aux': bool × bool → (bool → K) ⊗[K] (bool → K) := λ ⟨i, j⟩, jones_R_aux q i j 
-def jones_R_inv_aux': bool × bool → (bool → K) ⊗[K] (bool → K) := λ ⟨i, j⟩, jones_R_inv_aux q i j 
+noncomputable def jones_R_inv :=
+  matrix.to_lin
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
+    (jones_R_matrix_inv q)
 
-noncomputable def jones_R: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
-  ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_aux' q)
-
-noncomputable def jones_R_inv: (bool → K) ⊗[K] (bool → K) →ₗ[K] (bool → K) ⊗[K] (bool → K) :=
-  ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).constr K (jones_R_inv_aux' q)
-
-lemma jones_R_hom_inv_id: jones_R q ∘ₗ jones_R_inv q = linear_map.id := begin
-  apply ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).ext,
-  rintro ⟨x, y⟩,
-  simp, -- simp [linear_map.std_basis_apply],
-  rw jones_R_inv,
-  rw basis.constr_apply, -- finsupp.sum を具体的な和に書き下す方法を探している
-
+lemma jones_R_hom_inv_id: (jones_R_hom q).comp (jones_R_inv q) = linear_map.id := begin
+  rw [jones_R_hom, jones_R_inv, ←matrix.to_lin_mul],
+  rw ←matrix.to_lin_one ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)),
+  congr,
+  rw matrix.mul,
+  ext ⟨i₁, i₂⟩ ⟨k₁, k₂⟩,
+  rw [matrix.dot_product, finset.univ, elems_bool2],
   simp,
-
-  have h := @basis.constr_eq _ _ _ _ _ _ _ _ _
-    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
-    K _ _ _
-    (jones_R q ∘ jones_R_inv_aux' q)
-    linear_map.id 
-    (_),
-    {
-
-      sorry,
-    },
-    {
-      rintro ⟨x, y⟩, simp,
-      cases x,
-      {
-        simp [jones_R_inv_aux', jones_R],
-        -- have h := @basis.constr_eq _ _ _ _ _ _ _ _ _
-        sorry,
-      },
-    }
-    
-    
-    --((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) K,
-  -- apply tensor_product.ext', intros x y, rw [jones_R, jones_R_inv], rw ←basis.constr_comp, rw basis.constr_comp,
+  cases i₁,
+    cases i₂,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, simp, simp,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, simp, simp,
+    cases i₂,
+      cases k₁,
+        cases k₂, simp, {
+          simp, field_simp,
+          simp [right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
+          have: 3 + 2 + 2 = 7 := rfl, rw this,
+          have: 1 + 2 + 2 = 5 := rfl, rw this,
+          rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
+          simp,
+        },
+        cases k₂, simp, simp,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, simp, simp,
 end
-
-/-
-  have h' := @basis.constr_eq _ _ _ _ _ _ _ _ _
-    ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
-    K _ _ _
-    (jones_R q ∘ jones_R_inv_aux' q)
-    _
-    (_),
--/
 
 noncomputable def jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := {
-    hom := jones_R q,
+    hom := jones_R_hom q,
     inv := jones_R_inv q,
-    hom_inv_id' := begin
-      simp [jones_R, jones_R_inv, jones_R_aux, jones_R_inv_aux],
-      sorry,
-    end,
+    hom_inv_id' := jones_R_hom_inv_id q, -- ...
+    /- begin
+      change (jones_R_hom q).comp (jones_R_inv q) = 1,
+    end, -/
     inv_hom_id' := sorry
   },
   μ := {
