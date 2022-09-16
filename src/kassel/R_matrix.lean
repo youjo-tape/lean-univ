@@ -36,8 +36,6 @@ def partial_transpose_1 {V₁ V₂ W₁ W₂: C} (f: V₁ ⊗ V₂ ⟶ W₁ ⊗ 
   ≫ (ε_⁺ _ ⊗ 𝟙 W₂ ⊗ 𝟙 V₁ᘁ)   ≫ (λ_ _).hom
   ≫ τ_ _ _
 
-postfix `⁺`:1025 := partial_transpose_1
-
 structure enhanced_R_matrix (V: C) :=
   (c: V ⊗ V ≅ V ⊗ V)
   (μ: V ≅ V)
@@ -53,8 +51,8 @@ structure enhanced_R_matrix (V: C) :=
   (relation_2: c.hom ≫ (μ.hom ⊗ μ.hom) = (μ.hom ⊗ μ.hom) ≫ c.hom)
   (relation_3_1: trace_2 (c.hom ≫ (𝟙 V ⊗ μ.hom)) = 𝟙 V)
   (relation_3_2: trace_2 (c.inv ≫ (𝟙 V ⊗ μ.hom)) = 𝟙 V)
-  (relation_4_1: (τ_ _ _ ≫ c.inv)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.hom ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
-  (relation_4_2: (τ_ _ _ ≫ c.hom)⁺ ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ (c.inv ≫ τ_ _ _)⁺ ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
+  (relation_4_1: partial_transpose_1 (τ_ _ _ ≫ c.inv) ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ partial_transpose_1 (c.hom ≫ τ_ _ _) ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
+  (relation_4_2: partial_transpose_1 (τ_ _ _ ≫ c.hom) ≫ (𝟙 Vᘁ ⊗ μ.hom) ≫ partial_transpose_1 (c.inv ≫ τ_ _ _) ≫ (𝟙 Vᘁ ⊗ μ.inv) = 𝟙 (Vᘁ ⊗ V))
 
 /-
 variables (V: C) (F: Tangle ⥤ C)
@@ -373,8 +371,6 @@ def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
   map := λ X Y f, quotient.lift_on' f (functor_map V R) (functor_map_well_defined V R)
 }
 
-lemma elems_bool2: fintype.elems (bool × bool) = {(tt, tt), (tt, ff), (ff, tt), (ff, ff)} := rfl
-
 variables {K: Type} [field K]
 
 lemma pow_mul_single (a: K) (n: ℕ): a ^ n * a = a ^ (n + 1) := by nth_rewrite 1 ←pow_one a; rw pow_add
@@ -424,30 +420,16 @@ lemma jones_R_hom_inv_id: jones_R_hom q ∘ₗ jones_R_inv q = linear_map.id := 
   congr,
   rw matrix.mul,
   ext ⟨i₁, i₂⟩ ⟨k₁, k₂⟩,
-  rw [matrix.dot_product, finset.univ, elems_bool2],
+  rw [matrix.dot_product, finset.univ],
+  erw [finset.sum_product, fintype.sum_bool],
   simp,
-  cases i₁,
-    cases i₂,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
-    cases i₂,
-      cases k₁,
-        cases k₂, simp, {
-          simp, field_simp,
-          simp [right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
-          have: 5 + 0 = 5 := rfl, rw this,
-          have: 7 + 0 = 7 := rfl, rw this,
-          rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
-          simp,
-        },
-        cases k₂, simp, simp,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
+  cases i₁; cases i₂; cases k₁; cases k₂; simp,
+  field_simp,
+  simp [right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
+  have: 5 + 0 = 5 := rfl, rw this,
+  have: 7 + 0 = 7 := rfl, rw this,
+  rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
+  simp,
 end
 
 lemma jones_R_inv_hom_id: jones_R_inv q ∘ₗ jones_R_hom q = linear_map.id := begin
@@ -456,40 +438,25 @@ lemma jones_R_inv_hom_id: jones_R_inv q ∘ₗ jones_R_hom q = linear_map.id := 
   congr,
   rw matrix.mul,
   ext ⟨i₁, i₂⟩ ⟨k₁, k₂⟩,
-  rw [matrix.dot_product, finset.univ, elems_bool2],
+  rw [matrix.dot_product, finset.univ],
+  erw [finset.sum_product, fintype.sum_bool],
   simp,
-  cases i₁,
-    cases i₂,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, {
-          simp, field_simp,
-          simp [left_distrib, right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
-          have: 5 + 0 = 5 := rfl, rw this,
-          have: 7 + 0 = 7 := rfl, rw this,
-          rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
-          simp,
-        }, simp,
-    cases i₂,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
-      cases k₁,
-        cases k₂, simp, simp,
-        cases k₂, simp, simp,
+  cases i₁; cases i₂; cases k₁; cases k₂; simp,
+  field_simp,
+  simp [left_distrib, right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
+  have: 5 + 0 = 5 := rfl, rw this,
+  have: 7 + 0 = 7 := rfl, rw this,
+  rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
+  simp,
 end
 
 noncomputable def jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := {
     hom := jones_R_hom q,
     inv := jones_R_inv q,
-    hom_inv_id' := jones_R_hom_inv_id q, -- ...
-    /- begin
-      change (jones_R_hom q).comp (jones_R_inv q) = 1,
-    end, -/
+    hom_inv_id' := begin
+      
+    end, -- jones_R_hom_inv_id q,
     inv_hom_id' := sorry
   },
   μ := {
