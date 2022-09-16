@@ -418,7 +418,7 @@ noncomputable def jones_R_inv :=
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
     (jones_R_matrix_inv q)
 
-lemma jones_R_hom_inv_id: (jones_R_hom q).comp (jones_R_inv q) = linear_map.id := begin
+lemma jones_R_hom_inv_id: jones_R_hom q ∘ₗ jones_R_inv q = linear_map.id := begin
   rw [jones_R_hom, jones_R_inv, ←matrix.to_lin_mul],
   rw ←matrix.to_lin_one ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)),
   congr,
@@ -439,11 +439,43 @@ lemma jones_R_hom_inv_id: (jones_R_hom q).comp (jones_R_inv q) = linear_map.id :
         cases k₂, simp, {
           simp, field_simp,
           simp [right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
-          have: 3 + 2 + 2 = 7 := rfl, rw this,
-          have: 1 + 2 + 2 = 5 := rfl, rw this,
+          have: 5 + 0 = 5 := rfl, rw this,
+          have: 7 + 0 = 7 := rfl, rw this,
           rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
           simp,
         },
+        cases k₂, simp, simp,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, simp, simp,
+end
+
+lemma jones_R_inv_hom_id: jones_R_inv q ∘ₗ jones_R_hom q = linear_map.id := begin
+  rw [jones_R_hom, jones_R_inv, ←matrix.to_lin_mul],
+  rw ←matrix.to_lin_one ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)),
+  congr,
+  rw matrix.mul,
+  ext ⟨i₁, i₂⟩ ⟨k₁, k₂⟩,
+  rw [matrix.dot_product, finset.univ, elems_bool2],
+  simp,
+  cases i₁,
+    cases i₂,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, simp, simp,
+      cases k₁,
+        cases k₂, simp, simp,
+        cases k₂, {
+          simp, field_simp,
+          simp [left_distrib, right_distrib, ←pow_add, neg_mul, pow_mul_single, single_mul_pow],
+          have: 5 + 0 = 5 := rfl, rw this,
+          have: 7 + 0 = 7 := rfl, rw this,
+          rw ←add_assoc, rw add_assoc ((q: K)^7) _ _,
+          simp,
+        }, simp,
+    cases i₂,
+      cases k₁,
+        cases k₂, simp, simp,
         cases k₂, simp, simp,
       cases k₁,
         cases k₂, simp, simp,
