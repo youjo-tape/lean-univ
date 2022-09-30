@@ -371,12 +371,12 @@ def functor (R: enhanced_R_matrix V): Tangle ⥤ C := {
   map := λ X Y f, quotient.lift_on' f (functor_map V R) (functor_map_well_defined V R)
 }
 
-variables {K: Type} [field K]
+variables {K: Type v} [field K]
 
 lemma pow_mul_single (a: K) (n: ℕ): a ^ n * a = a ^ (n + 1) := by nth_rewrite 1 ←pow_one a; rw pow_add
 lemma single_mul_pow (a: K) (n: ℕ): a * a ^ n = a ^ (1 + n) := by nth_rewrite 0 ←pow_one a; rw pow_add
 
-@[simp] def linear_map_smul (V: FinVect K) (s: K): V →ₗ[K] V :=
+@[simp] def linear_map_smul (V: FinVect K) (s: K): V.obj →ₗ[K] V.obj :=
   is_linear_map.mk' (λ x, s • x) (is_linear_map.is_linear_map_smul s)
 
 @[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
@@ -385,6 +385,7 @@ lemma single_mul_pow (a: K) (n: ℕ): a * a ^ n = a ^ (1 + n) := by nth_rewrite 
 end⟩
 
 variables (q: Kˣ)
+include q
 
 @[simp] def jones_R_matrix: matrix (bool × bool) (bool × bool) K 
   | (ff, ff) (ff, ff) := q⁻¹
@@ -402,13 +403,13 @@ variables (q: Kˣ)
   | (tt, tt) (tt, tt) := q
   | _ _ := 0
 
-noncomputable def jones_R_hom :=
+noncomputable def jones_R_hom: (V₂ ⊗ V₂) ⟶ (V₂ ⊗ (@V₂ K _)) :=
   matrix.to_lin
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
     (jones_R_matrix q)
 
-noncomputable def jones_R_inv :=
+noncomputable def jones_R_inv: (V₂ ⊗ V₂) ⟶ (V₂ ⊗ (@V₂ K _)) :=
   matrix.to_lin
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
     ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))
@@ -450,23 +451,44 @@ lemma jones_R_inv_hom_id: jones_R_inv q ∘ₗ jones_R_hom q = linear_map.id := 
   simp,
 end
 
+open_locale tensor_product
+
+#check
+  (Module.monoidal_category.tensor_hom linear_map.id (jones_R_hom q))
+  -- ∘ₗ (linear_equiv.to_Module_iso (tensor_product.assoc _ _ _ _))
+
+#check
+  (linear_equiv.to_Module_iso (tensor_product.assoc K _ _ _))
+
+lemma jones_R_relation_1:
+     (monoidal_category.tensor_hom (𝟙 V₂) (jones_R_hom q)) ≫ (α_ _ _ _).inv
+  ≫ (monoidal_category.tensor_hom (jones_R_hom q) (𝟙 V₂)) ≫ (α_ _ _ _).hom
+  ≫ (monoidal_category.tensor_hom (𝟙 V₂) (jones_R_hom q)) ≫ (α_ _ _ _).inv
+  =                                                          (α_ _ _ _).inv
+  ≫ (monoidal_category.tensor_hom (jones_R_hom q) (𝟙 V₂)) ≫ (α_ _ _ _).hom
+  ≫ (monoidal_category.tensor_hom (𝟙 V₂) (jones_R_hom q)) ≫ (α_ _ _ _).inv
+  ≫ (monoidal_category.tensor_hom (jones_R_hom q) (𝟙 V₂)) :=
+begin
+  unfold_projs, -- 複雑...
+end
+
+-- coevaluation の計算はできる？
+
 noncomputable def jones_enhanced_R_matrix: @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := {
     hom := jones_R_hom q,
     inv := jones_R_inv q,
-    hom_inv_id' := begin
-      
-    end, -- jones_R_hom_inv_id q,
-    inv_hom_id' := sorry
+    hom_inv_id' := jones_R_inv_hom_id q,
+    inv_hom_id' := jones_R_hom_inv_id q
   },
-  μ := {
+  /- μ := {
     hom := linear_map_smul V₂ ((q⁻¹)^2: K),
     inv := linear_map_smul V₂ (q^2: K),
     hom_inv_id' := by tidy,
     inv_hom_id' := by tidy
-  },
+  }, -/
   relation_1 := begin
-    sorry,
+    unfold_projs, dsimp,
   end,
   relation_2 := sorry,
   relation_3_1 := sorry,
