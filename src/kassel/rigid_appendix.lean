@@ -108,8 +108,8 @@ section
   open right_pivotal_category
   notation `φ_` := right_pivotor
 
-  variables (K: Type) [field K]
-  instance: right_pivotal_category (FinVect K) := {
+  variables {K: Type*} [field K]
+  instance FinVect.right_pivotal_category: right_pivotal_category (FinVect K) := {
     right_pivotor := begin
       intro X,
       change X ≅ FinVect.FinVect_dual K (FinVect.FinVect_dual K X),
