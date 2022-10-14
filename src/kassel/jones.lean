@@ -106,6 +106,19 @@ lemma μ_hom_inv_id: μ_inv q ∘ₗ μ_hom q = linear_map.id :=
 lemma μ_inv_hom_id: μ_hom q ∘ₗ μ_inv q = linear_map.id :=
   by simp [μ_hom, μ_inv, linear_map.smul_comp, linear_map.comp_smul]
 
+#check tensor_product.assoc
+
+/-noncomputable def assoc_to_mat {m n p}
+  [fintype m] [fintype n] [fintype p]
+  [decidable_eq ((m × n) × p)] :=
+  
+  linear_map.to_matrix
+    (((pi.basis_fun K m).tensor_product (pi.basis_fun K n)).tensor_product (pi.basis_fun K p))
+    ((pi.basis_fun K m).tensor_product ((pi.basis_fun K n).tensor_product (pi.basis_fun K p)))
+    -- (tensor_product.assoc K (m → K) (n → K) (p → K)).to_linear_map
+-/
+-- #check assoc_to_mat (tensor_product.assoc _ _ _ _).to_linear_map
+
 lemma R_relation_1:
   (tensor_product.assoc K _ _ _).symm.to_linear_map
   ∘ₗ ((R_hom q).ltensor _)
@@ -145,7 +158,7 @@ lemma R_relation_2:
 end
 
 lemma R_relaton_3_1:
-  
+
 := begin
   sorry,
 end
