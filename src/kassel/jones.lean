@@ -1,6 +1,6 @@
 import kassel.enhanced_R_matrix
 import tactic.field_simp
-import kassel.kronecker_appendix
+import kassel.to_matrix_appendix
 
 namespace kassel
 namespace jones
@@ -104,50 +104,77 @@ lemma μ_hom_inv_id: μ_inv q ∘ₗ μ_hom q = linear_map.id :=
 lemma μ_inv_hom_id: μ_hom q ∘ₗ μ_inv q = linear_map.id :=
   by simp [μ_hom, μ_inv, linear_map.smul_comp, linear_map.comp_smul]
 
-/-noncomputable def assoc_to_mat {m n p}
-  [fintype m] [fintype n] [fintype p]
-  [decidable_eq ((m × n) × p)] :=
-  
-  linear_map.to_matrix
-    (((pi.basis_fun K m).tensor_product (pi.basis_fun K n)).tensor_product (pi.basis_fun K p))
-    ((pi.basis_fun K m).tensor_product ((pi.basis_fun K n).tensor_product (pi.basis_fun K p)))
-    -- (tensor_product.assoc K (m → K) (n → K) (p → K)).to_linear_map
--/
--- #check assoc_to_mat (tensor_product.assoc _ _ _ _).to_linear_map
+open_locale matrix kronecker
 
-lemma R_relation_1:
-  (tensor_product.assoc K _ _ _).symm.to_linear_map
-  ∘ₗ ((R_hom q).ltensor _)
-  ∘ₗ (tensor_product.assoc K _ _ _).to_linear_map
-  ∘ₗ ((R_hom q).rtensor _)
-  ∘ₗ (tensor_product.assoc K _ _ _).symm.to_linear_map
-  ∘ₗ ((R_hom q).ltensor _)
-= 
-  ((R_hom q).rtensor _)
-  ∘ₗ (tensor_product.assoc K _ _ _).symm.to_linear_map
-  ∘ₗ ((R_hom q).ltensor _)
-  ∘ₗ (tensor_product.assoc K _ _ _).to_linear_map
-  ∘ₗ ((R_hom q).rtensor _)
-  ∘ₗ (tensor_product.assoc K _ _ _).symm.to_linear_map
-:= begin
-  ext,
-  sorry,
+lemma R_relation_1_matrix:
+  (associator_inv_matrix K) ⬝
+  ((1: matrix _ _ K).kronecker (R_matrix q)) ⬝
+  (associator_hom_matrix K) ⬝
+  ((R_matrix q).kronecker (1: matrix _ _ K)) ⬝
+  (associator_inv_matrix K) ⬝
+  ((1: matrix _ _ K).kronecker (R_matrix q)) =
+  ((R_matrix q).kronecker (1: matrix _ _ K)) ⬝
+  (associator_inv_matrix K) ⬝
+  ((1: matrix _ _ K).kronecker (R_matrix q)) ⬝
+  (associator_hom_matrix K) ⬝
+  ((R_matrix q).kronecker (1: matrix _ _ K)) ⬝
+  (associator_inv_matrix K) :=
+begin
+  simp only [
+    associator_hom_matrix_reindex,
+    associator_inv_matrix_reindex,
+    associator_hom_matrix_reindex_assoc,
+    associator_inv_matrix_reindex_assoc
+  ],
+  ext ⟨⟨i₁, i₂⟩, i₃⟩ ⟨j₁, j₂, j₃⟩,
+  simp only [matrix.mul_apply],
+  dsimp,
+  simp_rw [←finset.univ_product_univ],
+  simp_rw [finset.sum_product],
+  simp_rw [fintype.sum_bool],
+  simp only [associator_inv_matrix, matrix.one_apply_eq, mul_one, one_mul, matrix.one_apply_ne, ne.def, not_false_iff, mul_zero, zero_mul, add_zero, zero_add, R_matrix],
+  cases i₁; simp only [matrix.one_apply_eq, mul_one, one_mul, matrix.one_apply_ne, ne.def, not_false_iff, mul_zero, zero_mul, add_zero, zero_add, R_matrix];
+  cases j₁; simp only [matrix.one_apply_eq, mul_one, one_mul, matrix.one_apply_ne, ne.def, not_false_iff, mul_zero, zero_mul, add_zero, zero_add, R_matrix];
+  cases i₃; simp only [matrix.one_apply_eq, mul_one, one_mul, matrix.one_apply_ne, ne.def, not_false_iff, mul_zero, zero_mul, add_zero, zero_add, R_matrix];
+  cases i₂; simp only [matrix.one_apply_eq, mul_one, one_mul, matrix.one_apply_ne, ne.def, not_false_iff, mul_zero, zero_mul, add_zero, zero_add, R_matrix];
+  cases j₂; cases j₃; simp; ring_nf; field_simp; ring,
 end
 
-open_locale kronecker matrix
+lemma R_relation_1:
+  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  (tensor_product.map 1 (R_hom q)) ∘ₗ
+  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  (tensor_product.map (R_hom q) 1) ∘ₗ
+  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  (tensor_product.map 1 (R_hom q))
+= 
+  (tensor_product.map (R_hom q) 1) ∘ₗ
+  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  (tensor_product.map 1 (R_hom q)) ∘ₗ
+  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  (tensor_product.map (R_hom q) 1) ∘ₗ
+  (tensor_product.assoc K _ _ _).symm.to_linear_map
+:= begin
+  apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
+    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)))
+    (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool))
+  )).mp,
+  simp only [
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool))) _,
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool)) _
+  ],
+  simp only [
+    linear_map.to_matrix_associator_hom,
+    linear_map.to_matrix_associator_inv,
+    linear_map.to_matrix_tensor,
+    linear_map.to_matrix_one,
+    linear_map.to_matrix_to_lin, R_hom,
+    ←matrix.mul_assoc
+  ],
+  rw R_relation_1_matrix,
+end
 
-#check
-  (R_matrix q ⊗ₖ (1: matrix bool bool K))
-#check
-  ((1: matrix bool bool K) ⊗ₖ R_matrix q)
-
-#check matrix.reindex
-  (equiv.prod_assoc bool bool bool)
-  (equiv.prod_assoc bool bool bool)
-  ((R_matrix q) ⊗ₖ (1 : matrix bool bool K))
-
-#check finset.sum_product
-
+/-
 lemma my_assoc_reindex (A: matrix ((bool × bool) × bool) ((bool × bool) × bool) K):
   matrix.reindex
     (equiv.prod_assoc bool bool bool)
@@ -188,7 +215,7 @@ begin
   },
 
 end
-
+-/
 
 lemma jones_R_relation_1':
   ((1: matrix bool bool K) ⊗ₖ R_matrix q)
