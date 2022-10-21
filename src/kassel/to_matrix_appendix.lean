@@ -1,5 +1,6 @@
 import linear_algebra.matrix.to_lin
 import data.matrix.kronecker
+import algebra.category.FinVect
 
 namespace kassel
 
@@ -23,6 +24,38 @@ begin
 end
 
 end lemmas
+
+section tensor_product
+
+open_locale kronecker
+
+lemma linear_map.to_matrix_tensor
+  {m₁ m₂ n₁ n₂: Type*}
+  [fintype m₁] [fintype m₂] [fintype n₁] [fintype n₂]
+  [decidable_eq m₁] [decidable_eq m₂] [decidable_eq n₁] [decidable_eq n₂]
+  {M₁ M₂ N₁ N₂: Type*}
+  [add_comm_group M₁] [module K M₁] (a₁: basis m₁ K M₁)
+  [add_comm_group M₂] [module K M₂] (a₂: basis m₂ K M₂)
+  [add_comm_group N₁] [module K N₁] (b₁: basis n₁ K N₁)
+  [add_comm_group N₂] [module K N₂] (b₂: basis n₂ K N₂)
+  (f₁: M₁ →ₗ[K] N₁)
+  (f₂: M₂ →ₗ[K] N₂):
+  linear_map.to_matrix
+    (basis.tensor_product a₁ a₂)
+    (basis.tensor_product b₁ b₂)
+    (tensor_product.map f₁ f₂) =
+  linear_map.to_matrix a₁ b₁ f₁ ⊗ₖ linear_map.to_matrix a₂ b₂ f₂ :=
+begin
+  ext ⟨i₁, i₂⟩ ⟨j₁, j₂⟩,
+  rw matrix.kronecker_apply,
+  simp_rw linear_map.to_matrix_apply,
+  rw basis.tensor_product_apply,
+  rw tensor_product.map_tmul,
+  rw basis.tensor_product,
+  simp,
+end
+
+end tensor_product
 
 section associator
 
@@ -197,37 +230,28 @@ end
 
 end associator
 
-section tensor_product
+section coevaluation
 
-lemma linear_map.to_matrix_tensor
-  {m₁ m₂ n₁ n₂: Type*}
-  [fintype m₁] [fintype m₂] [fintype n₁] [fintype n₂]
-  [decidable_eq m₁] [decidable_eq m₂] [decidable_eq n₁] [decidable_eq n₂]
-  {M₁ M₂ N₁ N₂: Type*}
-  [add_comm_group M₁] [module K M₁] (a₁: basis m₁ K M₁)
-  [add_comm_group M₂] [module K M₂] (a₂: basis m₂ K M₂)
-  [add_comm_group N₁] [module K N₁] (b₁: basis n₁ K N₁)
-  [add_comm_group N₂] [module K N₂] (b₂: basis n₂ K N₂)
-  (f₁: M₁ →ₗ[K] N₁)
-  (f₂: M₂ →ₗ[K] N₂):
+variables
+  {B: Type*} [fintype B] [decidable_eq B]
+  (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
+  (bV: basis B K V)
+  {ι: Type*} [unique ι]
+
+open_locale big_operators
+
+lemma coevaluation_apply_one':
+  (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
+
+lemma coevaluation_to_matrix:
   linear_map.to_matrix
-    (basis.tensor_product a₁ a₂)
-    (basis.tensor_product b₁ b₂)
-    (tensor_product.map f₁ f₂) =
-  matrix.kronecker
-    (linear_map.to_matrix a₁ b₁ f₁)
-    (linear_map.to_matrix a₂ b₂ f₂)
-  :=
+    (basis.singleton ι K)
+    (bV.tensor_product (bV.dual_basis))
+    (coevaluation K V) = 0 :=
 begin
-  ext ⟨i₁, i₂⟩ ⟨j₁, j₂⟩,
-  rw [matrix.kronecker, matrix.kronecker_apply],
-  simp_rw linear_map.to_matrix_apply,
-  rw basis.tensor_product_apply,
-  rw tensor_product.map_tmul,
-  rw basis.tensor_product,
-  simp,
+  
 end
 
-end tensor_product
+end coevaluation
 
 end kassel
