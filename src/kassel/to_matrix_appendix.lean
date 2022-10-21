@@ -236,21 +236,59 @@ variables
   {B: Type*} [fintype B] [decidable_eq B]
   (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
   (bV: basis B K V)
-  {ι: Type*} [unique ι]
 
 open_locale big_operators
 
 lemma coevaluation_apply_one':
   (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
 
+@[simp] def coevaluation_matrix: matrix (bool × bool) unit K
+  | (x, y) star :=
+    if (x = y) then 1 else 0
+
+lemma coevaluation_matrix_to_lin:
+  matrix.to_lin
+    (basis.singleton unit K)
+    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
+    coevaluation_matrix =
+  (coevaluation K (bool → K)) :=
+begin
+  apply (basis.singleton unit K).ext,
+  intro,
+  rw basis.singleton_apply,
+  rw coevaluation_apply_one' (bool → K) (pi.basis_fun K bool),
+  rw matrix.to_lin_apply,
+  simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
+  simp [matrix.mul_vec],
+end
+
 lemma coevaluation_to_matrix:
   linear_map.to_matrix
-    (basis.singleton ι K)
-    (bV.tensor_product (bV.dual_basis))
-    (coevaluation K V) = 0 :=
+    (basis.singleton unit K)
+    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
+    (coevaluation K (bool → K)) =
+  coevaluation_matrix :=
 begin
-  
+  apply (equiv_like.apply_eq_iff_eq (
+    matrix.to_lin
+      (basis.singleton unit K)
+      ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
+  )).mp,
+  simp [coevaluation_matrix_to_lin],
 end
+
+/-
+lemma coevaluation_to_matrix:
+  linear_map.to_matrix
+    (basis.singleton unit K)
+    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
+    (coevaluation K (bool → K)) =
+  coevaluation_matrix :=
+begin
+  ext ⟨i, j⟩,
+  simp,
+end
+-/
 
 end coevaluation
 

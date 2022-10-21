@@ -214,8 +214,6 @@ end
 
 -- trace_2 (c.hom ≫ (𝟙 V ⊗ μ.hom)) = 𝟙 V
 
--- coevaluation の計算はできる？
-
 section
 
 variables (q)
@@ -240,7 +238,9 @@ noncomputable def enhanced_R_matrix:
   @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
   c := c' q,
   μ := μ' q,
-  relation_1 := sorry, -- by apply R_relation_1,
+  relation_1 := begin
+    apply R_relation_1,
+  end, -- sorry, -- by apply R_relation_1,
   relation_2 := sorry, -- by apply R_relation_2,
   relation_3_1 := begin
     rw trace_2,
