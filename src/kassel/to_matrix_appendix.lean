@@ -7,10 +7,13 @@ namespace kassel
 variables
   {K: Type*} [field K]
 
+open_locale matrix big_operators
+
 section lemmas
+
 variables
   {α: Type*} [fintype α] [decidable_eq α]
-  {s : finset α}
+  {s t: finset α}
 
 lemma separate_sum {e: α} {f: α → K} (h: e ∈ s):
   s.sum f = (s \ {e}).sum f + f e :=
@@ -23,13 +26,58 @@ begin
   simp,
 end
 
+lemma sum_nonzero
+  (h1: t ⊆ s) (f: α → K) (h2: ∀ x ∈ s \ t, f x = 0):
+  s.sum f = t.sum f :=
+begin
+  simp [←(finset.sum_filter_add_sum_filter_not s (λ x, x ∈ t) f)],
+  rw [finset.filter_not, finset.filter_mem_eq_inter],
+  simp only [(finset.inter_eq_right_iff_subset t s).mpr h1],
+  have := finset.sum_eq_zero h2,
+  simp at *,
+  assumption,
+end
+
+lemma linear_equiv.to_linear_map_to_fun_eq_to_fun {X Y}
+  [add_comm_monoid X] [module K X]
+  [add_comm_monoid Y] [module K Y]
+  (e: X ≃ₗ[K] Y): (e.to_linear_map: X → Y) = (e: X → Y) :=
+by simp
+
+variables
+  {M N: Type*}
+  [add_comm_group M] [module K M]
+  [add_comm_group N] [module K N]
+  {m n: Type*}
+  [fintype m] (bM: basis m K M)
+  [fintype n] (bN: basis n K N)
+
+lemma basis.tensor_product_repr_apply
+  (x y x' y'):
+  (bM.tensor_product bN).repr (x ⊗ₜ y) (x', y') = ((bM.repr) x) x' * ((bN.repr) y) y' :=
+by simp [basis.tensor_product]
+
+lemma pi.basis_fun_apply' {l} [fintype l] [decidable_eq l] (x y: l):
+  (pi.basis_fun K l) x y = if (y = x) then 1 else 0 :=
+by simp [linear_map.std_basis_apply, function.update_apply]
+
+variables
+  {B: Type*} [fintype B] [decidable_eq B]
+  (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
+  (bV: basis B K V)
+
+lemma coevaluation_apply_one':
+  (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
+
 end lemmas
 
-section tensor_product
+variable (K)
+
+namespace tensor_product
 
 open_locale kronecker
 
-lemma linear_map.to_matrix_tensor
+lemma to_matrix
   {m₁ m₂ n₁ n₂: Type*}
   [fintype m₁] [fintype m₂] [fintype n₁] [fintype n₂]
   [decidable_eq m₁] [decidable_eq m₂] [decidable_eq n₁] [decidable_eq n₂]
@@ -51,245 +99,285 @@ begin
   simp_rw linear_map.to_matrix_apply,
   rw basis.tensor_product_apply,
   rw tensor_product.map_tmul,
-  rw basis.tensor_product,
-  simp,
+  rw basis.tensor_product_repr_apply,
 end
 
 end tensor_product
 
-section associator
+namespace associator
 
-variables (K)
+variables
   {l m n: Type*}
   [fintype l] [fintype m] [fintype n]
   [decidable_eq l] [decidable_eq m] [decidable_eq n]
 
-@[simp] def associator_hom_matrix: matrix (l × (m × n)) ((l × m) × n) K
+@[simp] def hom_matrix: matrix (l × (m × n)) ((l × m) × n) K
 | (a₁, (b₁, c₁)) ((a₂, b₂), c₂) :=
-  if (a₁ = a₂) ∧ (b₁ = b₂) ∧ (c₁ = c₂) then 1 else 0
+  (ite (a₁ = a₂) 1 0) * (ite (b₁ = b₂) 1 0) * (ite (c₁ = c₂) 1 0)
 
-lemma matrix.to_lin_associator_hom_matrix:
-  matrix.to_lin
-    (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
-    ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
-    (associator_hom_matrix K) =
-  (tensor_product.assoc K _ _ _).to_linear_map :=
-begin
-  apply (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n)).ext,
-  rintro ⟨⟨x, y⟩, z⟩,
-  rw [matrix.to_lin_self, finset.univ],
-  have h_union: fintype.elems (l × m × n) = (fintype.elems (l × m × n) \ {(x, y, z)}) ∪ {(x, y, z)} := by simp [fintype.complete],
-  have h_disjoint: disjoint (fintype.elems (l × m × n) \ {(x, y, z)}) {(x, y, z)} := by simp,
-  rw [h_union, finset.sum_union h_disjoint],
-  simp,
-  apply finset.sum_eq_zero,
-  rintro ⟨x1, y1, z1⟩ h,
-  simp at *,
-  left,
-  exact h.2,
-end
+@[simp] def inv_matrix: matrix ((l × m) × n) (l × (m × n)) K
+| ((a₁, b₁), c₁) (a₂, (b₂, c₂)) :=
+  (ite (a₁ = a₂) 1 0) * (ite (b₁ = b₂) 1 0) * (ite (c₁ = c₂) 1 0)
 
-lemma linear_map.to_matrix_associator_hom:
+lemma hom_matrix_apply (x: l × (m × n)) (y: (l × m) × n):
+  hom_matrix K x y = (ite (x.1 = y.1.1) 1 0) * (ite (x.2.1 = y.1.2) 1 0) * (ite (x.2.2 = y.2) 1 0) :=
+by tidy
+
+lemma inv_matrix_apply (x: (l × m) × n) (y: l × (m × n)):
+  inv_matrix K x y = (ite (x.1.1 = y.1) 1 0) * (ite (x.1.2 = y.2.1) 1 0) * (ite (x.2 = y.2.2) 1 0) :=
+by tidy
+
+lemma hom_to_matrix:
   linear_map.to_matrix
     (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
     ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
     (tensor_product.assoc K _ _ _).to_linear_map =
-  associator_hom_matrix K :=
+  hom_matrix K :=
 begin
-  apply (equiv_like.apply_eq_iff_eq (
-    matrix.to_lin
-      (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
-      ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
-  )).mp,
-  simp [matrix.to_lin_associator_hom_matrix],
+  ext ⟨i₁, ⟨j₁, k₁⟩⟩ ⟨⟨i₂, j₂⟩, k₂⟩,
+  rw linear_map.to_matrix_apply,
+  simp_rw basis.tensor_product_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.assoc_tmul, hom_matrix],
+  simp_rw basis.tensor_product_repr_apply,
+  simp_rw [pi.basis_fun_repr, pi.basis_fun_apply', mul_assoc],
 end
 
-@[simp] def associator_inv_matrix: matrix ((l × m) × n) (l × (m × n)) K
-| ((a₁, b₁), c₁) (a₂, (b₂, c₂)) :=
-  if (a₁ = a₂) ∧ (b₁ = b₂) ∧ (c₁ = c₂) then 1 else 0
-
-lemma matrix.to_lin_associator_inv_matrix:
-  matrix.to_lin
-    ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
-    (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
-    (associator_inv_matrix K) =
-  (tensor_product.assoc K _ _ _).symm.to_linear_map :=
-begin
-  apply ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n))).ext,
-  rintro ⟨x, ⟨y, z⟩⟩,
-  rw [matrix.to_lin_self, finset.univ],
-  have h_union: fintype.elems ((l × m) × n) = (fintype.elems ((l × m) × n) \ {((x, y), z)}) ∪ {((x, y), z)} := by simp [fintype.complete],
-  have h_disjoint: disjoint (fintype.elems ((l × m) × n) \ {((x, y), z)}) {((x, y), z)} := by simp,
-  rw [h_union, finset.sum_union h_disjoint],
-  simp,
-  apply finset.sum_eq_zero,
-  rintro ⟨⟨x1, y1⟩, z1⟩ h,
-  simp at *,
-  left,
-  exact h.2,
-end
-
-lemma linear_map.to_matrix_associator_inv:
+lemma inv_to_matrix:
   linear_map.to_matrix
     ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
     (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
     (tensor_product.assoc K _ _ _).symm.to_linear_map =
-  associator_inv_matrix K :=
+  inv_matrix K :=
 begin
-  apply (equiv_like.apply_eq_iff_eq (
-    matrix.to_lin
-      ((pi.basis_fun K l).tensor_product ((pi.basis_fun K m).tensor_product (pi.basis_fun K n)))
-      (((pi.basis_fun K l).tensor_product (pi.basis_fun K m)).tensor_product (pi.basis_fun K n))
-  )).mp,
-  simp [matrix.to_lin_associator_inv_matrix],
+  ext ⟨⟨i₁, j₁⟩, k₁⟩ ⟨i₂, ⟨j₂, k₂⟩⟩,
+  rw linear_map.to_matrix_apply,
+  simp_rw basis.tensor_product_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.assoc_symm_tmul, inv_matrix],
+  simp_rw basis.tensor_product_repr_apply,
+  simp_rw [pi.basis_fun_repr, pi.basis_fun_apply'],
 end
 
-open_locale matrix
-
-lemma associator_hom_matrix_reindex {o}
+lemma hom_matrix_reindex {o}
   (A: matrix ((l × m) × n) o K):
-  associator_hom_matrix K ⬝ A = matrix.reindex (equiv.prod_assoc l m n) (equiv.refl o) A :=
+  hom_matrix K ⬝ A = matrix.reindex (equiv.prod_assoc l m n) (equiv.refl o) A :=
 begin
   ext ⟨x, ⟨y, z⟩⟩ w,
-  simp_rw matrix.mul_apply,
-  dsimp,
-  rw separate_sum (finset.mem_univ ((x, y), z)),
-  rw associator_hom_matrix,
-  have: ite (x = x ∧ y = y ∧ z = z) 1 0 * A ((x, y), z) w = A ((x, y), z) w := by simp,
-  rw [this, add_left_eq_self],
-  apply finset.sum_eq_zero,
-  rintro ⟨⟨x', y'⟩, z'⟩ h,
-  simp at *,
-  tauto,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {((x, y), z)}) (λ (j : (l × m) × n), _),
+  rw finset.sum_singleton, simp,
+  rintro ⟨⟨x', y'⟩, z'⟩, simp, tauto,
 end
 
-lemma associator_inv_matrix_reindex {o}
+lemma inv_matrix_reindex {o}
   (A: matrix (l × (m × n)) o K):
-  associator_inv_matrix K ⬝ A = matrix.reindex (equiv.prod_assoc l m n).symm (equiv.refl o) A :=
+  inv_matrix K ⬝ A = matrix.reindex (equiv.prod_assoc l m n).symm (equiv.refl o) A :=
 begin
   ext ⟨⟨x, y⟩, z⟩ w,
-  simp_rw matrix.mul_apply,
-  dsimp,
-  rw separate_sum (finset.mem_univ (x, (y, z))),
-  rw associator_inv_matrix,
-  have: ite (x = x ∧ y = y ∧ z = z) 1 0 * A (x, (y, z)) w = A (x, (y, z)) w := by simp,
-  rw [this, add_left_eq_self],
-  apply finset.sum_eq_zero,
-  rintro ⟨x', ⟨y', z'⟩⟩ h,
-  simp at *,
-  tauto,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {(x, (y, z))}) (λ (j : l × (m × n)), _),
+  rw finset.sum_singleton, simp,
+  rintro ⟨x', ⟨y', z'⟩⟩, simp, tauto,
 end
 
-lemma associator_hom_matrix_reindex_assoc {o p}
+lemma hom_matrix_reindex_assoc {o p}
   (A: matrix ((l × m) × n) o K) (B: matrix p (l × (m × n)) K):
-  (B ⬝ associator_hom_matrix K) ⬝ A = B ⬝ matrix.reindex (equiv.prod_assoc l m n) (equiv.refl o) A :=
+  (B ⬝ hom_matrix K) ⬝ A = B ⬝ matrix.reindex (equiv.prod_assoc l m n) (equiv.refl o) A :=
 begin
-  rw [matrix.mul_assoc, associator_hom_matrix_reindex],
+  rw [matrix.mul_assoc, hom_matrix_reindex],
 end
 
-lemma associator_inv_matrix_reindex_assoc {o p}
+lemma inv_matrix_reindex_assoc {o p}
   (A: matrix (l × (m × n)) o K) (B: matrix p ((l × m) × n) K):
-  (B ⬝ associator_inv_matrix K) ⬝ A = B ⬝ matrix.reindex (equiv.prod_assoc l m n).symm (equiv.refl o) A :=
+  (B ⬝ inv_matrix K) ⬝ A = B ⬝ matrix.reindex (equiv.prod_assoc l m n).symm (equiv.refl o) A :=
 begin
-  rw [matrix.mul_assoc, associator_inv_matrix_reindex],
-end
-
-lemma reindex_associator_hom_matrix {o}
-  (A: matrix o (l × (m × n)) K):
-  A ⬝ associator_hom_matrix K = matrix.reindex (equiv.refl o) (equiv.prod_assoc l m n).symm A :=
-begin
-  ext w ⟨⟨x, y⟩, z⟩,
-  simp_rw matrix.mul_apply,
-  dsimp,
-  rw separate_sum (finset.mem_univ (x, (y, z))),
-  rw associator_hom_matrix,
-  have: A w (x, (y, z)) * ite (x = x ∧ y = y ∧ z = z) 1 0 = A w (x, (y, z)) := by simp,
-  rw [this, add_left_eq_self],
-  apply finset.sum_eq_zero,
-  rintro ⟨x', ⟨y', z'⟩⟩ h,
-  simp at *,
-  tauto,
-end
-
-lemma reindex_associator_inv_matrix {o}
-  (A: matrix o ((l × m) × n) K):
-  A ⬝ associator_inv_matrix K = matrix.reindex (equiv.refl o) (equiv.prod_assoc l m n) A :=
-begin
-  ext w ⟨x, ⟨y, z⟩⟩,
-  simp_rw matrix.mul_apply,
-  dsimp,
-  rw separate_sum (finset.mem_univ ((x, y), z)),
-  rw associator_inv_matrix,
-  have: A w ((x, y), z) * ite (x = x ∧ y = y ∧ z = z) 1 0 = A w ((x, y), z) := by simp,
-  rw [this, add_left_eq_self],
-  apply finset.sum_eq_zero,
-  rintro ⟨⟨x', y'⟩, z'⟩ h,
-  simp at *,
-  tauto,
+  rw [matrix.mul_assoc, inv_matrix_reindex],
 end
 
 end associator
 
-section coevaluation
+namespace right_unitor
 
 variables
-  {B: Type*} [fintype B] [decidable_eq B]
-  (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
-  (bV: basis B K V)
+  {n: Type*} [fintype n] [decidable_eq n]
 
-open_locale big_operators
+@[simp] def hom_matrix: matrix n (n × unit) K
+  | x (y, star) := ite (x = y) 1 0
 
-lemma coevaluation_apply_one':
-  (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
+@[simp] def inv_matrix: matrix (n × unit) n K
+  | (x, star) y := ite (x = y) 1 0
 
-@[simp] def coevaluation_matrix: matrix (bool × bool) unit K
-  | (x, y) star :=
-    if (x = y) then 1 else 0
+lemma hom_matrix_apply (x: n) (y: n × unit):
+  hom_matrix K x y = ite (x = y.1) 1 0 := by tidy
 
-lemma coevaluation_matrix_to_lin:
-  matrix.to_lin
+lemma inv_matrix_apply (x: n × unit) (y: n):
+  inv_matrix K x y = ite (x.1 = y) 1 0 := by tidy
+
+lemma hom_to_matrix:
+  linear_map.to_matrix
+    ((pi.basis_fun K bool).tensor_product (basis.singleton unit K))
+    (pi.basis_fun K bool)
+    (tensor_product.rid K (bool → K)).to_linear_map =
+  hom_matrix K :=
+begin
+  ext i ⟨j, star⟩,
+  rw linear_map.to_matrix_apply,
+  rw basis.tensor_product_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.rid_tmul, hom_matrix],
+  rw [pi.basis_fun_repr, basis.singleton_apply, one_smul, pi.basis_fun_apply'],
+end
+
+lemma inv_to_matrix:
+  linear_map.to_matrix
+    (pi.basis_fun K n)
+    ((pi.basis_fun K n).tensor_product (basis.singleton unit K))
+    (tensor_product.rid K (n → K)).symm.to_linear_map =
+  inv_matrix K :=
+begin
+  ext ⟨i, star⟩ j,
+  rw linear_map.to_matrix_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.rid_symm_apply, inv_matrix],
+  rw [basis.tensor_product_repr_apply],
+  rw [pi.basis_fun_repr, pi.basis_fun_apply', basis.singleton_repr, mul_one],
+end
+
+lemma hom_matrix_reindex {o}
+  (A: matrix (n × unit) o K):
+  hom_matrix K ⬝ A = matrix.reindex (equiv.prod_punit n) (equiv.refl o) A :=
+begin
+  ext x y,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {(x, unit.star)}) (λ (j : n × unit), _),
+  rw finset.sum_singleton, simp,
+  rintro ⟨x', star⟩, simp, tauto,
+end
+
+lemma inv_matrix_reindex {o}
+  (A: matrix n o K):
+  inv_matrix K ⬝ A = matrix.reindex (equiv.prod_punit n).symm (equiv.refl o) A :=
+begin
+  ext ⟨x, star⟩ y,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {x}) (λ (j : n), _),
+  rw finset.sum_singleton, simp,
+  rintro x', simp, tauto,
+end
+
+end right_unitor
+
+namespace left_unitor
+
+variables
+  {n: Type*} [fintype n] [decidable_eq n]
+
+@[simp] def hom_matrix: matrix n (unit × n) K
+  | x (star, y) := ite (x = y) 1 0
+
+@[simp] def inv_matrix: matrix (unit × n) n K
+  | (star, x) y := ite (x = y) 1 0
+
+lemma hom_matrix_apply (x: n) (y: unit × n):
+  hom_matrix K x y = ite (x = y.2) 1 0 := by tidy
+
+lemma inv_matrix_apply (x: unit × n) (y: n):
+  inv_matrix K x y = ite (x.2 = y) 1 0 := by tidy
+
+lemma hom_to_matrix:
+  linear_map.to_matrix
+    ((basis.singleton unit K).tensor_product (pi.basis_fun K bool))
+    (pi.basis_fun K bool)
+    (tensor_product.lid K (bool → K)).to_linear_map =
+  hom_matrix K :=
+begin
+  ext i ⟨star, j⟩,
+  rw linear_map.to_matrix_apply,
+  rw basis.tensor_product_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.lid_tmul, hom_matrix],
+  rw [pi.basis_fun_repr, basis.singleton_apply, one_smul, pi.basis_fun_apply'],
+end
+
+lemma inv_to_matrix:
+  linear_map.to_matrix
+    (pi.basis_fun K n)
+    ((basis.singleton unit K).tensor_product (pi.basis_fun K n))
+    (tensor_product.lid K (n → K)).symm.to_linear_map =
+  inv_matrix K :=
+begin
+  ext ⟨i, star⟩ j,
+  rw linear_map.to_matrix_apply,
+  rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.lid_symm_apply, inv_matrix],
+  rw [basis.tensor_product_repr_apply],
+  rw [pi.basis_fun_repr, pi.basis_fun_apply', basis.singleton_repr, one_mul],
+end
+
+lemma hom_matrix_reindex {o}
+  (A: matrix (unit × n) o K):
+  hom_matrix K ⬝ A = matrix.reindex (equiv.punit_prod n) (equiv.refl o) A :=
+begin
+  ext x y,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {(unit.star, x)}) (λ (j : unit × n), _),
+  rw finset.sum_singleton, simp,
+  rintro ⟨star, x'⟩, simp, tauto,
+end
+
+lemma inv_matrix_reindex {o}
+  (A: matrix n o K):
+  inv_matrix K ⬝ A = matrix.reindex (equiv.punit_prod n).symm (equiv.refl o) A :=
+begin
+  ext ⟨star, x⟩ y,
+  rw matrix.mul_apply,
+  rw sum_nonzero (finset.subset_univ {x}) (λ (j : n), _),
+  rw finset.sum_singleton, simp,
+  rintro x', simp, tauto,
+end
+
+end left_unitor
+
+namespace coevaluation
+
+@[simp] def matrix: matrix (bool × bool) unit K
+  | (x, y) star := if (x = y) then 1 else 0
+
+lemma to_matrix:
+  linear_map.to_matrix
     (basis.singleton unit K)
     ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
-    coevaluation_matrix =
-  (coevaluation K (bool → K)) :=
+    (coevaluation K (bool → K)) =
+  matrix K :=
 begin
-  apply (basis.singleton unit K).ext,
-  intro,
+  ext ⟨x, y⟩ star,
+  rw linear_map.to_matrix_apply,
   rw basis.singleton_apply,
-  rw coevaluation_apply_one' (bool → K) (pi.basis_fun K bool),
-  rw matrix.to_lin_apply,
-  simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
-  simp [matrix.mul_vec],
+  rw [coevaluation_apply_one' (bool → K) (pi.basis_fun K bool), matrix],
+  rw [fintype.sum_bool, map_add, finsupp.coe_add, pi.add_apply],
+  simp_rw [basis.tensor_product_repr_apply, pi.basis_fun_repr],
+  simp_rw [basis.dual_basis_repr, pi.basis_fun_apply', basis.coord_apply, pi.basis_fun_repr, pi.basis_fun_apply'],
+  cases x; cases y; simp,
 end
-
-lemma coevaluation_to_matrix:
-  linear_map.to_matrix
-    (basis.singleton unit K)
-    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
-    (coevaluation K (bool → K)) =
-  coevaluation_matrix :=
-begin
-  apply (equiv_like.apply_eq_iff_eq (
-    matrix.to_lin
-      (basis.singleton unit K)
-      ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
-  )).mp,
-  simp [coevaluation_matrix_to_lin],
-end
-
-/-
-lemma coevaluation_to_matrix:
-  linear_map.to_matrix
-    (basis.singleton unit K)
-    ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).dual_basis))
-    (coevaluation K (bool → K)) =
-  coevaluation_matrix :=
-begin
-  ext ⟨i, j⟩,
-  simp,
-end
--/
 
 end coevaluation
+
+namespace evaluation
+
+@[simp] def matrix: matrix unit (bool × bool) K
+  | star (x, y) := if (x = y) then 1 else 0
+
+-- FinVect.evaluation -> contract_left
+
+lemma to_matrix:
+  linear_map.to_matrix
+    (((pi.basis_fun K bool).dual_basis).tensor_product (pi.basis_fun K bool))
+    (basis.singleton unit K)
+    (contract_left K (bool → K)) =
+  matrix K :=
+begin
+  ext star ⟨x, y⟩,
+  rw linear_map.to_matrix_apply,
+  rw basis.tensor_product_apply,
+  rw [contract_left_apply, matrix],
+  rw [basis.singleton_repr, basis.dual_basis_apply, pi.basis_fun_repr, pi.basis_fun_apply'],
+end
+
+end evaluation
 
 end kassel
