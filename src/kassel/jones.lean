@@ -234,11 +234,11 @@ lemma R_relation_1:
     linear_map.to_matrix_comp _ (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool)) _,
     tensor_product.to_matrix
   ],
-  simp only [
+  simp_rw [
+    linear_map.to_matrix_id,
+    R_hom, linear_map.to_matrix_to_lin,
     associator.hom_to_matrix,
     associator.inv_to_matrix,
-    linear_map.to_matrix_one, ←linear_map.one_eq_id,
-    linear_map.to_matrix_to_lin, R_hom,
     ←matrix.mul_assoc
   ],
   rw R_relation_1_matrix,
@@ -288,22 +288,19 @@ lemma R_relation_2:
     linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) _,
     tensor_product.to_matrix
   ],
-  simp only [
-    linear_map.to_matrix_to_lin, R_hom, μ_hom,
-    ←matrix.mul_assoc
-  ],
+  simp_rw [R_hom, μ_hom, linear_map.to_matrix_to_lin],
   rw R_relation_2_matrix,
 end
 
-lemma R_relaton_3_1_matrix:
-  right_unitor.hom_matrix K ⬝
-  (1: matrix bool bool K) ⊗ₖ evaluation.matrix K ⬝
+lemma R_relation_3_1_matrix:
+  right_unitor.hom_matrix K bool ⬝
+  (1: matrix bool bool K) ⊗ₖ evaluation.matrix K bool ⬝
   associator.hom_matrix K ⬝
   (1 ⊗ₖ μ_matrix q ⬝ R_matrix q) ⊗ₖ 1 ⬝
   associator.inv_matrix K ⬝
-  1 ⊗ₖ coevaluation.matrix K ⬝
-  right_unitor.inv_matrix K =
-  (1: matrix bool bool K) :=
+  1 ⊗ₖ coevaluation.matrix K bool ⬝
+  right_unitor.inv_matrix K bool =
+  1 :=
 begin
   simp_rw [
     associator.hom_matrix_reindex_assoc,
@@ -344,23 +341,142 @@ begin
   ring_nf; field_simp; ring,
 end
 
-section aux
+lemma R_relation_3_1:
+  (tensor_product.rid K _).to_linear_map ∘ₗ
+  tensor_product.map linear_map.id (evaluation.rev K _) ∘ₗ
+  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  tensor_product.map (
+    tensor_product.map linear_map.id (μ_hom q) ∘ₗ R_hom q
+  ) linear_map.id ∘ₗ
+  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  (tensor_product.map linear_map.id (coevaluation K _)) ∘ₗ
+  (tensor_product.rid K _).symm.to_linear_map =
+  linear_map.id :=
+begin
+  apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
+    (pi.basis_fun K bool)
+    (pi.basis_fun K bool)
+  )).mp,
+  simp only [
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (basis.singleton unit K)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool).dual_basis) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) _,
+    tensor_product.to_matrix
+  ],
+  simp_rw [
+    R_hom, μ_hom, linear_map.to_matrix_to_lin,
+    linear_map.to_matrix_id,
+    associator.hom_to_matrix,
+    associator.inv_to_matrix,
+    right_unitor.hom_to_matrix,
+    right_unitor.inv_to_matrix,
+    coevaluation.to_matrix,
+    evaluation.rev_to_matrix,
+    ←matrix.mul_assoc
+  ],
+  rw R_relation_3_1_matrix,
+end
+
+lemma R_relation_3_2_matrix:
+  right_unitor.hom_matrix K bool ⬝
+  (1: matrix bool bool K) ⊗ₖ evaluation.matrix K bool ⬝
+  associator.hom_matrix K ⬝
+  (1 ⊗ₖ μ_matrix q ⬝ R_matrix_inv q) ⊗ₖ 1 ⬝
+  associator.inv_matrix K ⬝
+  1 ⊗ₖ coevaluation.matrix K bool ⬝
+  right_unitor.inv_matrix K bool =
+  1 :=
+begin
+  simp_rw [
+    associator.hom_matrix_reindex_assoc,
+    associator.inv_matrix_reindex_assoc,
+    right_unitor.hom_matrix_reindex
+  ],
+  apply matrix.ext',
+  intro v,
+  simp [←matrix.mul_vec_mul_vec],
+
+  nth_rewrite 3 matrix.mul_vec_apply,
+  simp_rw [right_unitor.inv_matrix_apply],
+  simp_rw [fintype.sum_bool],
+
+  nth_rewrite 2 matrix.mul_vec_apply,
+  simp_rw [matrix.submatrix_apply, equiv.prod_assoc_apply, id, matrix.kronecker_apply', matrix.one_apply],
+  simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool, fintype.sum_unit],
+  simp_rw [coevaluation.matrix, eq_self_iff_true, if_true, if_false],
+  simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
+
+  nth_rewrite 1 matrix.mul_vec_apply,
+  simp_rw [matrix.submatrix_apply, equiv.prod_assoc_symm_apply, id],
+  simp only [matrix.kronecker_apply', matrix.one_apply, matrix.mul_apply, matrix.smul_apply],
+  simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
+  simp_rw [R_matrix_inv, eq_self_iff_true, if_true, if_false],
+  simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
+
+  nth_rewrite 0 matrix.mul_vec_apply,
+  simp_rw [matrix.submatrix_apply, equiv.prod_punit_symm_apply, id, matrix.kronecker_apply', matrix.one_apply],
+  simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
+  simp_rw [evaluation.matrix, eq_self_iff_true, if_true, if_false],
+  simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
+
+  ext x,
+  cases x;
+  simp_rw [eq_self_iff_true, if_true, if_false];
+  simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one];
+  ring_nf; field_simp; ring,
+end
+
+lemma R_relation_3_2:
+  (tensor_product.rid K _).to_linear_map ∘ₗ
+  tensor_product.map linear_map.id (evaluation.rev K _) ∘ₗ
+  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  tensor_product.map (
+    tensor_product.map linear_map.id (μ_hom q) ∘ₗ R_inv q
+  ) linear_map.id ∘ₗ
+  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  (tensor_product.map linear_map.id (coevaluation K _)) ∘ₗ
+  (tensor_product.rid K _).symm.to_linear_map =
+  linear_map.id :=
+begin
+  apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
+    (pi.basis_fun K bool)
+    (pi.basis_fun K bool)
+  )).mp,
+  simp only [
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (basis.singleton unit K)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool).dual_basis) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)) _,
+    tensor_product.to_matrix
+  ],
+  simp_rw [
+    R_inv, μ_hom, linear_map.to_matrix_to_lin,
+    linear_map.to_matrix_id,
+    associator.hom_to_matrix,
+    associator.inv_to_matrix,
+    right_unitor.hom_to_matrix,
+    right_unitor.inv_to_matrix,
+    coevaluation.to_matrix,
+    evaluation.rev_to_matrix,
+    ←matrix.mul_assoc
+  ],
+  rw R_relation_3_2_matrix,
+end
 
 noncomputable def c': (@V₂ K _) ⊗ V₂ ≅ V₂ ⊗ V₂ := {
   hom := R_hom q,
   inv := R_inv q,
-  hom_inv_id' := R_hom_inv_id K q,
-  inv_hom_id' := R_inv_hom_id K q
+  hom_inv_id' := by apply R_hom_inv_id K q,
+  inv_hom_id' := by apply R_inv_hom_id K q
 }
 
 noncomputable def μ': (@V₂ K _) ≅ V₂ := {
   hom := μ_hom q,
   inv := μ_inv q,
-  hom_inv_id' := μ_hom_inv_id K q,
-  inv_hom_id' := μ_inv_hom_id K q
+  hom_inv_id' := by apply μ_hom_inv_id K q,
+  inv_hom_id' := by apply μ_inv_hom_id K q
 }
-
-end aux
 
 noncomputable def enhanced_R_matrix:
   @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
@@ -368,23 +484,8 @@ noncomputable def enhanced_R_matrix:
   μ := μ' K q,
   relation_1 := by apply R_relation_1 K q,
   relation_2 := by apply R_relation_2 K q,
-  relation_3_1 := begin
-    rw trace_2,
-    unfold_projs, dsimp,
-    simp only [
-      coevaluation,
-      evaluation,
-      evaluation_rev
-    ],
-    simp only [
-      Module.monoidal_category.associator,
-      Module.monoidal_category.right_unitor,
-      Module.monoidal_category.left_unitor,
-      right_pivotal_category.right_pivotor
-    ],
-    sorry,
-  end,
-  relation_3_2 := sorry,
+  relation_3_1 := by rw trace_2; apply R_relation_3_1 K q,
+  relation_3_2 := by rw trace_2; apply R_relation_3_2 K q,
   relation_4_1 := sorry,
   relation_4_2 := sorry
 }
@@ -396,14 +497,16 @@ end kassel
 /-
 
 # done
-- R_relation_3_1_matrix を証明
+- R_relation_3_* を証明
   - 補題 matrix.ext' による、行列の等式証明の高速化
   - kassel p.311 における μₘ と λₘ を取り違えていて、μ_matrix などの定義が間違っていたのを修正
-- to_matrix_appendix の内容を整理
+- to_matrix_appendix.lean の内容を整理
+  - 証明の単純化（to_matrix 系の補題の証明を直接的に書き換えて、to_linear_map 系の補題が不要に）
+  - 証明の高速化（可能な限り高速な tactics のみを使用）
+  - 補題の一般化（bool や bool → K のままだと R_relation_3_1 を証明できない）
 
 # todo
-- FinVect.right_pivotal_category の実装（relation_3_1 を書くのに必要）
-- R_relation_3_1 の記述および証明
-  - これができれば R_relation_3_2 も同様にできる
+- R_relation_4_* の記述および証明
+  - functor_map 側の証明方針によっては主張が変更される可能性があるので、とりあえず放置
 
 -/

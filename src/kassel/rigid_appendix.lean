@@ -86,38 +86,54 @@ section
   notation `δ_` := tensor_iso_dual_tensor_dual
 end
 
-section
-  variables
-    (C: Type u)
-    [category.{v} C]
-    [monoidal_category.{v} C]
-    [right_rigid_category.{v} C]
+section right_pivotal_category
 
-  -- * Define pivotal categories (rigid categories equipped with a natural isomorphism `ᘁᘁ ≅ 𝟙 C`).
-  -- 参考: https://tqft.net/web/research/students/SamQuinn/thesis.pdf
+variables
+  (C: Type u)
+  [category.{v} C]
+  [monoidal_category.{v} C]
+  [right_rigid_category.{v} C]
 
-  class right_pivotal_category :=
-    (right_pivotor: Π X: C, X ≅ Xᘁᘁ)
-    (notation `φ_` := right_pivotor)
-    (right_pivotor_naturality': ∀ {X Y: C} (f: X ⟶ Y), f ≫ (φ_ Y).hom = (φ_ X).hom ≫ fᘁᘁ)
-    -- (pivotor_monoidal_naturality: ∀ {X Y: C}, (φ_ X).hom ⊗ (φ_ Y).hom = (φ_ (X ⊗ Y)).hom ≫ _)
+-- * Define pivotal categories (rigid categories equipped with a natural isomorphism `ᘁᘁ ≅ 𝟙 C`).
+-- 参考: https://tqft.net/web/research/students/SamQuinn/thesis.pdf
 
-  restate_axiom right_pivotal_category.right_pivotor_naturality'
-  attribute [reassoc] right_pivotal_category.right_pivotor_naturality
+class right_pivotal_category :=
+  (right_pivotor: Π X: C, X ≅ Xᘁᘁ)
+  (notation `φ_` := right_pivotor)
+  (right_pivotor_naturality': ∀ {X Y: C} (f: X ⟶ Y), f ≫ (φ_ Y).hom = (φ_ X).hom ≫ fᘁᘁ)
+  -- (pivotor_monoidal_naturality: ∀ {X Y: C}, (φ_ X).hom ⊗ (φ_ Y).hom = (φ_ (X ⊗ Y)).hom ≫ _)
 
-  open right_pivotal_category
-  notation `φ_` := right_pivotor
+restate_axiom right_pivotal_category.right_pivotor_naturality'
+attribute [reassoc] right_pivotal_category.right_pivotor_naturality
 
-  variables {K: Type*} [field K]
-  instance FinVect.right_pivotal_category: right_pivotal_category (FinVect K) := {
-    right_pivotor := begin
-      intro X,
-      change X ≅ FinVect.FinVect_dual K (FinVect.FinVect_dual K X),
-      sorry
-    end,
-    right_pivotor_naturality' := sorry
-  }
+open right_pivotal_category
+notation `φ_` := right_pivotor
+
+namespace FinVect
+
+variables {K: Type v} [field K]
+
+noncomputable def right_pivotor (X: FinVect.{v} K): X ≅ Xᘁᘁ := {
+  hom := (module.eval_equiv K X.obj).to_linear_map,
+  inv := (module.eval_equiv K X.obj).symm.to_linear_map,
+  hom_inv_id' := by ext; simp [←module.eval_equiv_to_linear_map],
+  inv_hom_id' := by ext; simp [←module.eval_equiv_to_linear_map]
+}
+
+lemma right_pivotor_naturality (X Y: FinVect K) (f: X ⟶ Y):
+  f ≫ (right_pivotor Y).hom = (right_pivotor X).hom ≫ fᘁᘁ :=
+begin
+  sorry,
 end
+
+noncomputable instance right_pivotal_category: right_pivotal_category (FinVect K) := {
+  right_pivotor := right_pivotor,
+  right_pivotor_naturality' := right_pivotor_naturality
+}
+
+end FinVect
+
+end right_pivotal_category
 
 section
   variables
@@ -128,11 +144,11 @@ section
     [right_pivotal_category C]
     (V: C)
 
-  def coevaluation := η_ V Vᘁ
-  def evaluation := ε_ V Vᘁ
+  def coevaluation' := η_ V Vᘁ
+  def evaluation' := ε_ V Vᘁ
 
-  notation η_⁺ := coevaluation
-  notation ε_⁺ := evaluation
+  notation η_⁺ := coevaluation'
+  notation ε_⁺ := evaluation'
 
   def coevaluation_rev := η_⁺ Vᘁ ≫ (𝟙 Vᘁ ⊗ (φ_ _).inv)
   def evaluation_rev := ((φ_ _).hom ⊗ 𝟙 Vᘁ) ≫ ε_⁺ Vᘁ
@@ -143,11 +159,11 @@ section
   lemma id_comp_comp_id {V₁ V₂: C} (f: V₁ ⟶ V₂): 𝟙 _ ≫ f = f ≫ 𝟙 _ := by simp
 
   @[reassoc] lemma coevaluation_evaluation:
-    (𝟙 Vᘁ ⊗ η_⁺ _) ≫ (α_ _ _ _).inv ≫ (ε_⁺ _ ⊗ 𝟙 Vᘁ) = (ρ_ _).hom ≫ (λ_ _).inv := by simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev]
+    (𝟙 Vᘁ ⊗ η_⁺ _) ≫ (α_ _ _ _).inv ≫ (ε_⁺ _ ⊗ 𝟙 Vᘁ) = (ρ_ _).hom ≫ (λ_ _).inv := by simp [coevaluation', evaluation', coevaluation_rev, evaluation_rev]
 
   @[reassoc] lemma coevaluation_evaluation_rev:
     (𝟙 V ⊗ η_⁻ _) ≫ (α_ _ _ _).inv ≫ (ε_⁻ _ ⊗ 𝟙 V) = (ρ_ _).hom ≫ (λ_ _).inv := begin
-    simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev],
+    simp [coevaluation', evaluation', coevaluation_rev, evaluation_rev],
     slice_lhs 1 2 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
     slice_lhs 1 1 { rw [←category.comp_id (φ_ V).hom, ←category.id_comp (η_ _ _), tensor_comp], },
     slice_lhs 3 4 { rw associator_inv_naturality, },
@@ -157,11 +173,11 @@ section
   end
 
   @[reassoc] lemma evaluation_coevaluation:
-    (η_⁺ _ ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ ε_⁺ _) = (λ_ _).hom ≫ (ρ_ _).inv := by simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev]
+    (η_⁺ _ ⊗ 𝟙 V) ≫ (α_ _ _ _).hom ≫ (𝟙 V ⊗ ε_⁺ _) = (λ_ _).hom ≫ (ρ_ _).inv := by simp [coevaluation', evaluation', coevaluation_rev, evaluation_rev]
 
   @[reassoc] lemma evaluation_coevaluation_rev:
     (η_⁻ _ ⊗ 𝟙 Vᘁ) ≫ (α_ _ _ _).hom ≫ (𝟙 Vᘁ ⊗ ε_⁻ _) = (λ_ _).hom ≫ (ρ_ _).inv := begin
-    simp [coevaluation, evaluation, coevaluation_rev, evaluation_rev],
+    simp [coevaluation', evaluation', coevaluation_rev, evaluation_rev],
     slice_lhs 3 4 { rw [←tensor_comp, ←tensor_comp, (φ_ _).inv_hom_id, category.comp_id, tensor_id, tensor_id], },
     simp,
   end
@@ -171,7 +187,7 @@ section
     ≫ (𝟙 _ ⊗ η_⁺ Y ⊗ 𝟙 _)  ≫ (𝟙 _ ⊗ (α_ _ _ _).hom) ≫ (α_ _ _ _).inv
     ≫ (𝟙 _ ⊗ (δ_ _ _).inv) :=
   begin
-    simp only [coevaluation], rw tensor_iso_dual_tensor_dual,
+    simp only [coevaluation'], rw tensor_iso_dual_tensor_dual,
     sorry,
   end
   @[reassoc] lemma evaluation_tensor (X Y: C): ε_⁺ (X ⊗ Y)
@@ -179,7 +195,7 @@ section
     ≫ (𝟙 _ ⊗ ε_⁺ X ⊗ 𝟙 _) ≫ (𝟙 _ ⊗ (λ_ _).hom)
     ≫ ε_⁺ Y               :=
   begin
-    simp only [evaluation],
+    simp only [evaluation'],
     sorry,
   end
   @[reassoc] lemma coevaluation_rev_tensor (X Y: C): η_⁻ (X ⊗ Y)
@@ -214,7 +230,7 @@ section
 
   lemma right_adjoint_mate_inv {X Y: C} (f: X ⟶ Y):
   (λ_ _).inv ≫ (η_⁺ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ fᘁ) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁺ _) ≫ (ρ_ _).hom = f := begin
-    simp [coevaluation, evaluation],
+    simp [coevaluation', evaluation'],
     simp [right_adjoint_mate],
     slice_lhs 8 10 { rw [←id_tensor_comp, ←id_tensor_comp, pentagon_inv, id_tensor_comp], }, simp,
     slice_lhs 11 12 { rw [associator_inv_conjugation, ←triangle_assoc_comp_right, comp_tensor_id], simp, },
@@ -236,7 +252,7 @@ section
   
   @[reassoc] lemma right_adjoint_mate {X Y: C} (f: X ⟶ Y):
     (ρ_ _).inv ≫ (𝟙 _ ⊗ η_⁺ _) ≫ (𝟙 _ ⊗ (f ⊗ 𝟙 _)) ≫ (α_ _ _ _).inv ≫ ((ε_⁺ _) ⊗ 𝟙 _) ≫ (λ_ _).hom = fᘁ :=
-      by rw [coevaluation, evaluation, right_adjoint_mate]
+      by rw [coevaluation', evaluation', right_adjoint_mate]
   @[reassoc] lemma right_adjoint_mate_rev {X Y: C} (f: X ⟶ Y):
     (λ_ _).inv ≫ (η_⁻ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ f) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁻ _) ≫ (ρ_ _).hom = fᘁ :=
   begin
