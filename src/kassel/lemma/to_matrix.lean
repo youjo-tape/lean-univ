@@ -7,7 +7,7 @@ namespace kassel
 variables
   {K: Type*} [field K]
 
-open_locale matrix -- big_operators
+open_locale matrix big_operators
 
 section lemmas
 
@@ -68,7 +68,6 @@ variables
   (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
   (bV: basis B K V)
 
-open_locale big_operators
 lemma coevaluation_apply_one':
   (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
 
@@ -113,10 +112,13 @@ variables
   {l m n: Type*}
   [fintype l] [fintype m] [fintype n]
   [decidable_eq l] [decidable_eq m] [decidable_eq n]
-  {L M N: Type*}
+  (L M N: Type*)
   [add_comm_group L] [module K L] (bL: basis l K L)
   [add_comm_group M] [module K M] (bM: basis m K M)
   [add_comm_group N] [module K N] (bN: basis n K N)
+
+abbreviation hom := (tensor_product.assoc K L M N).to_linear_map
+abbreviation inv := (tensor_product.assoc K L M N).symm.to_linear_map
 
 @[simp] def hom_matrix: matrix (l × (m × n)) ((l × m) × n) K
 | (a₁, (b₁, c₁)) ((a₂, b₂), c₂) :=
@@ -126,19 +128,11 @@ variables
 | ((a₁, b₁), c₁) (a₂, (b₂, c₂)) :=
   (ite (a₂ = a₁) 1 0) * (ite (b₂ = b₁) 1 0) * (ite (c₂ = c₁) 1 0)
 
-lemma hom_matrix_apply (x: l × (m × n)) (y: (l × m) × n):
-  hom_matrix K x y = (ite (x.1 = y.1.1) 1 0) * (ite (x.2.1 = y.1.2) 1 0) * (ite (x.2.2 = y.2) 1 0) :=
-by tidy
-
-lemma inv_matrix_apply (x: (l × m) × n) (y: l × (m × n)):
-  inv_matrix K x y = (ite (x.1.1 = y.1) 1 0) * (ite (x.1.2 = y.2.1) 1 0) * (ite (x.2 = y.2.2) 1 0) :=
-by tidy
-
 lemma hom_to_matrix:
   linear_map.to_matrix
     ((bL.tensor_product bM).tensor_product bN)
     (bL.tensor_product (bM.tensor_product bN))
-    (tensor_product.assoc K _ _ _).to_linear_map =
+    (hom K L M N) =
   hom_matrix K :=
 begin
   ext ⟨i₁, ⟨j₁, k₁⟩⟩ ⟨⟨i₂, j₂⟩, k₂⟩,
@@ -153,7 +147,7 @@ lemma inv_to_matrix:
   linear_map.to_matrix
     (bL.tensor_product (bM.tensor_product bN))
     ((bL.tensor_product bM).tensor_product bN)
-    (tensor_product.assoc K _ _ _).symm.to_linear_map =
+    (inv K L M N) =
   inv_matrix K :=
 begin
   ext ⟨⟨i₁, j₁⟩, k₁⟩ ⟨i₂, ⟨j₂, k₂⟩⟩,
@@ -170,7 +164,7 @@ lemma hom_matrix_reindex {o}
 begin
   ext ⟨x, ⟨y, z⟩⟩ w,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {((x, y), z)}) (λ (j : (l × m) × n), _),
+  rw sum_nonzero (finset.subset_univ {((x, y), z)}) (λ (j: (l × m) × n), _),
   rw finset.sum_singleton, simp,
   rintro ⟨⟨x', y'⟩, z'⟩, simp, tauto,
 end
@@ -181,7 +175,7 @@ lemma inv_matrix_reindex {o}
 begin
   ext ⟨⟨x, y⟩, z⟩ w,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {(x, (y, z))}) (λ (j : l × (m × n)), _),
+  rw sum_nonzero (finset.subset_univ {(x, (y, z))}) (λ (j: l × (m × n)), _),
   rw finset.sum_singleton, simp,
   rintro ⟨x', ⟨y', z'⟩⟩, simp, tauto,
 end
@@ -205,66 +199,61 @@ end associator
 namespace right_unitor
 
 variables
-  (n: Type*) [fintype n] [decidable_eq n]
+  (M: Type*) [add_comm_group M] [module K M]
+  (m: Type*) [fintype m] [decidable_eq m]
+  (bM: basis m K M)
 
-@[simp] def hom_matrix: matrix n (n × unit) K
-  | x (y, star) := ite (x = y) 1 0
+abbreviation hom := (tensor_product.rid K M).to_linear_map
+abbreviation inv := (tensor_product.rid K M).symm.to_linear_map
 
-@[simp] def inv_matrix: matrix (n × unit) n K
-  | (x, star) y := ite (x = y) 1 0
+@[simp] def hom_matrix: matrix m (m × unit) K
+  | x (y, star) := ite (y = x) 1 0
 
-lemma hom_matrix_apply (x: n) (y: n × unit):
-  hom_matrix K n x y = ite (x = y.1) 1 0 := by tidy
-
-lemma inv_matrix_apply (x: n × unit) (y: n):
-  inv_matrix K n x y = ite (x.1 = y) 1 0 := by tidy
+@[simp] def inv_matrix: matrix (m × unit) m K
+  | (x, star) y := ite (y = x) 1 0
 
 lemma hom_to_matrix:
   linear_map.to_matrix
-    ((pi.basis_fun K n).tensor_product (basis.singleton unit K))
-    (pi.basis_fun K n)
-    (tensor_product.rid K (n → K)).to_linear_map =
-  hom_matrix K n :=
+    (bM.tensor_product (basis.singleton unit K)) bM (hom K M) =
+  hom_matrix K m :=
 begin
   ext i ⟨j, star⟩,
   rw linear_map.to_matrix_apply,
   rw basis.tensor_product_apply,
   rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.rid_tmul, hom_matrix],
-  rw [pi.basis_fun_repr, basis.singleton_apply, one_smul, pi.basis_fun_apply'],
+  rw [basis.singleton_apply, one_smul, basis.repr_self_apply],
 end
 
 lemma inv_to_matrix:
   linear_map.to_matrix
-    (pi.basis_fun K n)
-    ((pi.basis_fun K n).tensor_product (basis.singleton unit K))
-    (tensor_product.rid K (n → K)).symm.to_linear_map =
-  inv_matrix K n :=
+    bM (bM.tensor_product (basis.singleton unit K)) (inv K M) =
+  inv_matrix K m :=
 begin
   ext ⟨i, star⟩ j,
   rw linear_map.to_matrix_apply,
   rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.rid_symm_apply, inv_matrix],
   rw [basis.tensor_product_repr_apply],
-  rw [pi.basis_fun_repr, pi.basis_fun_apply', basis.singleton_repr, mul_one],
+  rw [basis.singleton_repr, mul_one, basis.repr_self_apply],
 end
 
 lemma hom_matrix_reindex {o}
-  (A: matrix (n × unit) o K):
-  hom_matrix K n ⬝ A = matrix.reindex (equiv.prod_punit n) (equiv.refl o) A :=
+  (A: matrix (m × unit) o K):
+  hom_matrix K m ⬝ A = matrix.reindex (equiv.prod_punit m) (equiv.refl o) A :=
 begin
   ext x y,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {(x, unit.star)}) (λ (j : n × unit), _),
+  rw sum_nonzero (finset.subset_univ {(x, unit.star)}) (λ (j: m × unit), _),
   rw finset.sum_singleton, simp,
   rintro ⟨x', star⟩, simp, tauto,
 end
 
 lemma inv_matrix_reindex {o}
-  (A: matrix n o K):
-  inv_matrix K n ⬝ A = matrix.reindex (equiv.prod_punit n).symm (equiv.refl o) A :=
+  (A: matrix m o K):
+  inv_matrix K m ⬝ A = matrix.reindex (equiv.prod_punit m).symm (equiv.refl o) A :=
 begin
   ext ⟨x, star⟩ y,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {x}) (λ (j : n), _),
+  rw sum_nonzero (finset.subset_univ {x}) (λ (j: m), _),
   rw finset.sum_singleton, simp,
   intro x', simp, tauto,
 end
@@ -274,66 +263,61 @@ end right_unitor
 namespace left_unitor
 
 variables
-  (n: Type*) [fintype n] [decidable_eq n]
+  (M: Type*) [add_comm_group M] [module K M]
+  (m: Type*) [fintype m] [decidable_eq m]
+  (bM: basis m K M)
 
-@[simp] def hom_matrix: matrix n (unit × n) K
-  | x (star, y) := ite (x = y) 1 0
+abbreviation hom := (tensor_product.lid K M).to_linear_map
+abbreviation inv := (tensor_product.lid K M).symm.to_linear_map
 
-@[simp] def inv_matrix: matrix (unit × n) n K
-  | (star, x) y := ite (x = y) 1 0
+@[simp] def hom_matrix: matrix m (unit × m) K
+  | x (star, y) := ite (y = x) 1 0
 
-lemma hom_matrix_apply (x: n) (y: unit × n):
-  hom_matrix K n x y = ite (x = y.2) 1 0 := by tidy
-
-lemma inv_matrix_apply (x: unit × n) (y: n):
-  inv_matrix K n x y = ite (x.2 = y) 1 0 := by tidy
+@[simp] def inv_matrix: matrix (unit × m) m K
+  | (star, x) y := ite (y = x) 1 0
 
 lemma hom_to_matrix:
   linear_map.to_matrix
-    ((basis.singleton unit K).tensor_product (pi.basis_fun K n))
-    (pi.basis_fun K n)
-    (tensor_product.lid K (n → K)).to_linear_map =
-  hom_matrix K n :=
+    ((basis.singleton unit K).tensor_product bM) bM (hom K M) =
+  hom_matrix K m :=
 begin
   ext i ⟨star, j⟩,
   rw linear_map.to_matrix_apply,
   rw basis.tensor_product_apply,
   rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.lid_tmul, hom_matrix],
-  rw [pi.basis_fun_repr, basis.singleton_apply, one_smul, pi.basis_fun_apply'],
+  rw [basis.singleton_apply, one_smul, basis.repr_self_apply],
 end
 
 lemma inv_to_matrix:
   linear_map.to_matrix
-    (pi.basis_fun K n)
-    ((basis.singleton unit K).tensor_product (pi.basis_fun K n))
-    (tensor_product.lid K (n → K)).symm.to_linear_map =
-  inv_matrix K n :=
+    bM ((basis.singleton unit K).tensor_product bM) (inv K M) =
+  inv_matrix K m :=
 begin
   ext ⟨i, star⟩ j,
   rw linear_map.to_matrix_apply,
   rw [linear_equiv.to_linear_map_to_fun_eq_to_fun, tensor_product.lid_symm_apply, inv_matrix],
   rw basis.tensor_product_repr_apply,
-  rw [pi.basis_fun_repr, pi.basis_fun_apply', basis.singleton_repr, one_mul],
+  rw [basis.singleton_repr, one_mul, basis.repr_self_apply],
 end
 
 lemma hom_matrix_reindex {o}
-  (A: matrix (unit × n) o K):
-  hom_matrix K n ⬝ A = matrix.reindex (equiv.punit_prod n) (equiv.refl o) A :=
+  (A: matrix (unit × m) o K):
+  hom_matrix K m ⬝ A = matrix.reindex (equiv.punit_prod m) (equiv.refl o) A :=
 begin
   ext x y,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {(unit.star, x)}) (λ (j : unit × n), _),
+  rw sum_nonzero (finset.subset_univ {(unit.star, x)}) (λ (j: unit × m), _),
   rw finset.sum_singleton, simp,
   rintro ⟨star, x'⟩, simp, tauto,
 end
 
 lemma inv_matrix_reindex {o}
-  (A: matrix n o K):
-  inv_matrix K n ⬝ A = matrix.reindex (equiv.punit_prod n).symm (equiv.refl o) A :=
+  (A: matrix m o K):
+  inv_matrix K m ⬝ A = matrix.reindex (equiv.punit_prod m).symm (equiv.refl o) A :=
 begin
   ext ⟨star, x⟩ y,
   rw matrix.mul_apply,
-  rw sum_nonzero (finset.subset_univ {x}) (λ (j : n), _),
+  rw sum_nonzero (finset.subset_univ {x}) (λ (j: m), _),
   rw finset.sum_singleton, simp,
   intro x', simp, tauto,
 end
@@ -343,32 +327,28 @@ end left_unitor
 namespace right_pivotor
 
 variables
-  {M: Type*} [add_comm_group M] [module K M] [finite_dimensional K M]
-  {m: Type*} [fintype m] [decidable_eq m] (bM: basis m K M)
+  (M: Type*) [add_comm_group M] [module K M] [finite_dimensional K M]
+  (m: Type*) [fintype m] [decidable_eq m] (bM: basis m K M)
+
+noncomputable abbreviation hom := (module.eval_equiv K M).to_linear_map
+noncomputable abbreviation inv := (module.eval_equiv K M).symm.to_linear_map
 
 lemma hom_to_matrix:
-  linear_map.to_matrix
-    bM
-    bM.dual_basis.dual_basis
-    (module.eval_equiv K M).to_linear_map =
-  1 :=
+  linear_map.to_matrix bM bM.dual_basis.dual_basis (hom K M) = 1 :=
 begin
   ext x y,
   rw linear_map.to_matrix_apply,
   rw basis.dual_basis_repr,
+  dsimp, rw ←linear_equiv.to_linear_map_to_fun_eq_to_fun,
   rw [module.eval_equiv_to_linear_map, module.dual.eval_apply, matrix.one_apply'],
   rw basis.dual_basis_apply_self,
 end
 
 lemma inv_to_matrix:
-  linear_map.to_matrix
-    bM.dual_basis.dual_basis
-    bM
-    (module.eval_equiv K M).symm.to_linear_map =
-  1 :=
+  linear_map.to_matrix bM.dual_basis.dual_basis bM (inv K M) = 1 :=
 begin
   rw ←one_mul (linear_map.to_matrix _ _ _),
-  nth_rewrite 0 ←(hom_to_matrix K bM),
+  nth_rewrite 0 ←(hom_to_matrix K M m bM),
   rw [matrix.mul_eq_mul, ←linear_map.to_matrix_comp],
   rw [linear_equiv.hom_inv_id', linear_map.to_matrix_id],
 end
@@ -378,17 +358,20 @@ end right_pivotor
 namespace coevaluation
 
 variables
-  {M: Type*} [add_comm_group M] [module K M] [finite_dimensional K M]
+  (M: Type*) [add_comm_group M] [module K M] [finite_dimensional K M]
   (m: Type*) [fintype m] [decidable_eq m] (bM: basis m K M)
+
+noncomputable abbreviation hom := coevaluation K M
+noncomputable abbreviation rev :=
+  tensor_product.map linear_map.id (right_pivotor.inv K M) ∘ₗ
+  coevaluation K (module.dual K M)
 
 @[simp] def matrix: matrix (m × m) unit K
   | (x, y) star := ite (y = x) 1 0
 
 lemma to_matrix:
   linear_map.to_matrix
-    (basis.singleton unit K)
-    (bM.tensor_product bM.dual_basis)
-    (coevaluation K M) =
+    (basis.singleton unit K) (bM.tensor_product bM.dual_basis) (hom K M) =
   matrix K m :=
 begin
   ext ⟨x, y⟩ star,
@@ -403,15 +386,9 @@ begin
   intro x', simp, tauto,
 end
 
-noncomputable abbreviation rev (M) [add_comm_group M] [module K M] [finite_dimensional K M] :=
-  tensor_product.map linear_map.id (module.eval_equiv K M).symm.to_linear_map ∘ₗ
-  coevaluation K (module.dual K M)
-
 lemma rev_to_matrix:
   linear_map.to_matrix
-    (basis.singleton unit K)
-    (bM.dual_basis.tensor_product bM)
-    (rev K M) =
+    (basis.singleton unit K) (bM.dual_basis.tensor_product bM) (rev K M) =
   matrix K m :=
 begin
   rw [
@@ -427,17 +404,22 @@ end coevaluation
 namespace evaluation
 
 variables
-  {M: Type*} [add_comm_group M] [module K M] [finite_dimensional K M]
+  (M: Type*) [add_comm_group M] [module K M] [finite_dimensional K M]
   (m: Type) [fintype m] [decidable_eq m] (bM: basis m K M)
 
 @[simp] def matrix: matrix unit (m × m) K
   | star (x, y) := ite (y = x) 1 0
 
+abbreviation hom := contract_left K M
+noncomputable abbreviation rev :=
+  contract_left K (module.dual K M) ∘ₗ
+  tensor_product.map (right_pivotor.hom K M) linear_map.id
+
 lemma to_matrix:
   linear_map.to_matrix
     (bM.dual_basis.tensor_product bM)
     (basis.singleton unit K)
-    (contract_left K M) =
+    (hom K M) =
   matrix K m :=
 begin
   ext star ⟨x, y⟩,
@@ -446,10 +428,6 @@ begin
   rw [contract_left_apply, matrix],
   rw [basis.singleton_repr, basis.dual_basis_apply, basis.repr_self_apply],
 end
-
-noncomputable abbreviation rev (M) [add_comm_group M] [module K M] [finite_dimensional K M] :=
-  contract_left K (module.dual K M) ∘ₗ
-  tensor_product.map (module.eval_equiv K M).to_linear_map linear_map.id
 
 lemma rev_to_matrix:
   linear_map.to_matrix

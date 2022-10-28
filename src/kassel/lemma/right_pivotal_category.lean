@@ -1,5 +1,5 @@
 import category_theory.monoidal.rigid.basic
-import algebra.category.FinVect
+import kassel.lemma.to_matrix
 
 namespace kassel
 open category_theory
@@ -114,8 +114,8 @@ namespace FinVect
 variables {K: Type v} [field K]
 
 noncomputable def right_pivotor (X: FinVect.{v} K): X ≅ Xᘁᘁ := {
-  hom := (module.eval_equiv K X.obj).to_linear_map,
-  inv := (module.eval_equiv K X.obj).symm.to_linear_map,
+  hom := right_pivotor.hom K X.obj,
+  inv := right_pivotor.inv K X.obj,
   hom_inv_id' := by ext; simp [←module.eval_equiv_to_linear_map],
   inv_hom_id' := by ext; simp [←module.eval_equiv_to_linear_map]
 }
@@ -123,7 +123,7 @@ noncomputable def right_pivotor (X: FinVect.{v} K): X ≅ Xᘁᘁ := {
 lemma right_pivotor_naturality (X Y: FinVect K) (f: X ⟶ Y):
   f ≫ (right_pivotor Y).hom = (right_pivotor X).hom ≫ fᘁᘁ :=
 begin
-  sorry,
+  unfold_projs, dsimp [right_adjoint_mate],
 end
 
 noncomputable instance right_pivotal_category: right_pivotal_category (FinVect K) := {

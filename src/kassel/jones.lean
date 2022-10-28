@@ -1,6 +1,6 @@
 import kassel.enhanced_R_matrix
+import kassel.lemma.to_matrix
 import tactic.field_simp
-import kassel.to_matrix_appendix
 
 namespace kassel
 
@@ -34,17 +34,12 @@ lemma matrix.kronecker_apply' {l m n o} (A: matrix l m K) (B: matrix n o K) (x y
   (A ⊗ₖ B) x y = A x.1 y.1 * B x.2 y.2 :=
 by simp
 
-lemma fintype.sum_unit (f: unit → K): ∑ (x : unit), f x = f unit.star :=
+@[simp] lemma fintype.sum_unit (f: unit → K): ∑ (x : unit), f x = f unit.star :=
 by rw [fintype.univ_punit, finset.sum_singleton]
 
 lemma equiv.prod_punit_symm_apply {n x}: (equiv.prod_punit n).symm x = (x, punit.star) := by simp
 
 end lemmas
-
-@[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
-  change finite_dimensional K (bool → K),
-  exact finite_dimensional.finite_dimensional_pi K,
-end⟩
 
 section
 
@@ -166,13 +161,12 @@ begin
   simp [←matrix.mul_vec_mul_vec],
 
   nth_rewrite 6 matrix.mul_vec_apply,
-  simp_rw [associator.inv_matrix_apply],
   simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
 
   nth_rewrite 5 matrix.mul_vec_apply,
   simp_rw [matrix.submatrix_apply, equiv.prod_assoc_symm_apply, id, matrix.kronecker_apply', matrix.one_apply],
   simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool],
-  simp_rw [eq_self_iff_true, if_true, if_false],
+  simp_rw [associator.inv_matrix, eq_self_iff_true, if_true, if_false],
   simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
 
   nth_rewrite 4 matrix.mul_vec_apply,
@@ -211,19 +205,19 @@ begin
 end
 
 lemma R_relation_1:
-  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  associator.inv K _ _ _ ∘ₗ
   (tensor_product.map linear_map.id (R_hom q)) ∘ₗ
-  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  associator.hom K _ _ _ ∘ₗ
   (tensor_product.map (R_hom q) linear_map.id) ∘ₗ
-  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  associator.inv K _ _ _ ∘ₗ
   (tensor_product.map linear_map.id (R_hom q))
 = 
   (tensor_product.map (R_hom q) linear_map.id) ∘ₗ
-  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
+  associator.inv K _ _ _ ∘ₗ
   (tensor_product.map linear_map.id (R_hom q)) ∘ₗ
-  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  associator.hom K _ _ _ ∘ₗ
   (tensor_product.map (R_hom q) linear_map.id) ∘ₗ
-  (tensor_product.assoc K _ _ _).symm.to_linear_map
+  associator.inv K _ _ _
 := begin
   apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
     ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)))
@@ -312,13 +306,12 @@ begin
   simp [←matrix.mul_vec_mul_vec],
 
   nth_rewrite 3 matrix.mul_vec_apply,
-  simp_rw [right_unitor.inv_matrix_apply],
-  simp_rw [fintype.sum_bool],
+  simp_rw fintype.sum_bool,
 
   nth_rewrite 2 matrix.mul_vec_apply,
   simp_rw [matrix.submatrix_apply, equiv.prod_assoc_apply, id, matrix.kronecker_apply', matrix.one_apply],
   simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool, fintype.sum_unit],
-  simp_rw [coevaluation.matrix, eq_self_iff_true, if_true, if_false],
+  simp_rw [right_unitor.inv_matrix, coevaluation.matrix, eq_self_iff_true, if_true, if_false],
   simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
 
   nth_rewrite 1 matrix.mul_vec_apply,
@@ -342,15 +335,15 @@ begin
 end
 
 lemma R_relation_3_1:
-  (tensor_product.rid K _).to_linear_map ∘ₗ
+  right_unitor.hom K _ ∘ₗ
   tensor_product.map linear_map.id (evaluation.rev K _) ∘ₗ
-  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  associator.hom K _ _ _ ∘ₗ
   tensor_product.map (
     tensor_product.map linear_map.id (μ_hom q) ∘ₗ R_hom q
   ) linear_map.id ∘ₗ
-  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
-  (tensor_product.map linear_map.id (coevaluation K _)) ∘ₗ
-  (tensor_product.rid K _).symm.to_linear_map =
+  associator.inv K _ _ _ ∘ₗ
+  (tensor_product.map linear_map.id (coevaluation.hom K (bool → K))) ∘ₗ
+  right_unitor.inv K _ =
   linear_map.id :=
 begin
   apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
@@ -398,13 +391,12 @@ begin
   simp [←matrix.mul_vec_mul_vec],
 
   nth_rewrite 3 matrix.mul_vec_apply,
-  simp_rw [right_unitor.inv_matrix_apply],
-  simp_rw [fintype.sum_bool],
+  simp_rw fintype.sum_bool,
 
   nth_rewrite 2 matrix.mul_vec_apply,
   simp_rw [matrix.submatrix_apply, equiv.prod_assoc_apply, id, matrix.kronecker_apply', matrix.one_apply],
   simp_rw [←finset.univ_product_univ, finset.sum_product, fintype.sum_bool, fintype.sum_unit],
-  simp_rw [coevaluation.matrix, eq_self_iff_true, if_true, if_false],
+  simp_rw [right_unitor.inv_matrix, coevaluation.matrix, eq_self_iff_true, if_true, if_false],
   simp only [add_zero, zero_add, mul_zero, zero_mul, one_mul, mul_one],
 
   nth_rewrite 1 matrix.mul_vec_apply,
@@ -428,15 +420,15 @@ begin
 end
 
 lemma R_relation_3_2:
-  (tensor_product.rid K _).to_linear_map ∘ₗ
+  right_unitor.hom K _ ∘ₗ
   tensor_product.map linear_map.id (evaluation.rev K _) ∘ₗ
-  (tensor_product.assoc K _ _ _).to_linear_map ∘ₗ
+  associator.hom K _ _ _ ∘ₗ
   tensor_product.map (
     tensor_product.map linear_map.id (μ_hom q) ∘ₗ R_inv q
   ) linear_map.id ∘ₗ
-  (tensor_product.assoc K _ _ _).symm.to_linear_map ∘ₗ
-  (tensor_product.map linear_map.id (coevaluation K _)) ∘ₗ
-  (tensor_product.rid K _).symm.to_linear_map =
+  associator.inv K _ _ _ ∘ₗ
+  (tensor_product.map linear_map.id (coevaluation.hom K (bool → K))) ∘ₗ
+  right_unitor.inv K _ =
   linear_map.id :=
 begin
   apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
@@ -464,22 +456,26 @@ begin
   rw R_relation_3_2_matrix,
 end
 
-noncomputable def c': (@V₂ K _) ⊗ V₂ ≅ V₂ ⊗ V₂ := {
+@[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
+  change finite_dimensional K (bool → K),
+  exact finite_dimensional.finite_dimensional_pi K,
+end⟩
+
+noncomputable def c': (V₂ K) ⊗ (V₂ K) ≅ (V₂ K) ⊗ (V₂ K) := {
   hom := R_hom q,
   inv := R_inv q,
   hom_inv_id' := by apply R_hom_inv_id K q,
   inv_hom_id' := by apply R_inv_hom_id K q
 }
 
-noncomputable def μ': (@V₂ K _) ≅ V₂ := {
+noncomputable def μ': (V₂ K) ≅ (V₂ K) := {
   hom := μ_hom q,
   inv := μ_inv q,
   hom_inv_id' := by apply μ_hom_inv_id K q,
   inv_hom_id' := by apply μ_inv_hom_id K q
 }
 
-noncomputable def enhanced_R_matrix:
-  @enhanced_R_matrix (FinVect K) _ _ _ _ _ V₂ := {
+noncomputable def jones_R_matrix: enhanced_R_matrix (FinVect K) (V₂ K) := {
   c := c' K q,
   μ := μ' K q,
   relation_1 := by apply R_relation_1 K q,
