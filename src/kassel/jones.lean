@@ -493,18 +493,10 @@ end kassel
 /-
 
 # done
-- R_relation_3_* を証明
-  - 補題 matrix.ext' による、行列の等式証明の高速化
-  - kassel p.311 における μₘ と λₘ を取り違えていて、μ_matrix などの定義が間違っていたのを修正
-- to_matrix_appendix.lean の内容を整理
-  - 証明の単純化（to_matrix 系の補題の証明を直接的に書き換えて、to_linear_map 系の補題が不要に）
-  - 証明の高速化（可能な限り高速な tactics のみを使用）
-  - 補題の一般化（bool や bool → K のままだと R_relation_3_1 を証明できない）
-- 具体例の計算（trivial knot, trefoil knot）
+- coevaluation が基底によらないことの証明
 
 # todo
 - R_relation_4_* の記述および証明
   - enhanced_R_matrix に Tangle の 7_*, 8_* に相当する 4 式をそのまま仮定する方針で
-- coevaluation が基底によらないことの証明
 
 -/

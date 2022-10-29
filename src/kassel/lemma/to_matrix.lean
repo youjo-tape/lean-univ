@@ -1,6 +1,7 @@
 import linear_algebra.matrix.to_lin
 import data.matrix.kronecker
 import algebra.category.FinVect
+import kassel.lemma.coevaluation
 
 namespace kassel
 
@@ -28,18 +29,6 @@ lemma linear_equiv.hom_inv_id' {M N} [add_comm_monoid M] [add_comm_monoid N] [mo
   e.to_linear_map ∘ₗ e.symm.to_linear_map = linear_map.id :=
 by ext; simp
 
-lemma sum_nonzero
-  (h1: t ⊆ s) (f: α → K) (h2: ∀ x ∈ s \ t, f x = 0):
-  s.sum f = t.sum f :=
-begin
-  simp [←(finset.sum_filter_add_sum_filter_not s (λ x, x ∈ t) f)],
-  rw [finset.filter_not, finset.filter_mem_eq_inter],
-  simp only [(finset.inter_eq_right_iff_subset t s).mpr h1],
-  have := finset.sum_eq_zero h2,
-  simp at *,
-  assumption,
-end
-
 lemma linear_equiv.to_linear_map_to_fun_eq_to_fun {X Y}
   [add_comm_monoid X] [module K X]
   [add_comm_monoid Y] [module K Y]
@@ -62,14 +51,6 @@ by simp [basis.tensor_product]
 lemma pi.basis_fun_apply' {l} [fintype l] [decidable_eq l] (x y: l):
   (pi.basis_fun K l) x y = if (y = x) then 1 else 0 :=
 by simp [linear_map.std_basis_apply, function.update_apply]
-
-variables
-  {B: Type*} [fintype B] [decidable_eq B]
-  (V: Type*) [add_comm_group V] [module K V] [finite_dimensional K V]
-  (bV: basis B K V)
-
-lemma coevaluation_apply_one':
-  (coevaluation K V) (1: K) = ∑ (i: B), bV i ⊗ₜ[K] bV.coord i := sorry
 
 end lemmas
 
@@ -377,7 +358,7 @@ begin
   ext ⟨x, y⟩ star,
   rw linear_map.to_matrix_apply,
   rw basis.singleton_apply,
-  rw [coevaluation_apply_one' M bM, matrix],
+  rw [coevaluation_apply_one' bM, matrix],
   rw [map_sum, finsupp.coe_finset_sum, fintype.sum_apply],
   simp_rw basis.tensor_product_repr_apply,
   simp only [basis.repr_self_apply, basis.dual_basis_repr, basis.coord_apply],
