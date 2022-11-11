@@ -456,6 +456,22 @@ begin
   rw R_relation_3_2_matrix,
 end
 
+-- lemma R_relation_4_1:
+#check
+  tensor_product.map linear_map.id (associator.inv K (bool → K) (bool → K) (module.dual K (bool → K))) ∘ₗ
+  associator.hom K (module.dual K (bool → K)) _ _ ∘ₗ
+#check
+  tensor_product.map
+    ((tensor_product.map linear_map.id (μ_inv q)) ∘ₗ coevaluation.rev K (bool → K))
+    (tensor_product.map linear_map.id linear_map.id)
+#check
+  left_unitor.inv K _
+
+
+/-
+  (η_⁻ (V₂ K) ≫ (𝟙 (V₂ K)ᘁ ⊗ (μ' K q).inv) ⊗ 𝟙 (V₂ K) ⊗ 𝟙 (V₂ K)ᘁ) ≫ (α_ (V₂ K)ᘁ (V₂ K) (V₂ K ⊗ (V₂ K)ᘁ)).hom ≫ (𝟙 (V₂ K)ᘁ ⊗ (α_ (V₂ K) (V₂ K) (V₂ K)ᘁ).inv) ≫ (𝟙 (V₂ K)ᘁ ⊗ (c' K q).inv ⊗ 𝟙 (V₂ K)ᘁ) ≫ (𝟙 (V₂ K)ᘁ ⊗ (α_ (V₂ K) (V₂ K) (V₂ K)ᘁ).hom) ≫ (α_ (V₂ K)ᘁ (V₂ K) (V₂ K ⊗ (V₂ K)ᘁ)).inv ≫ ((𝟙 (V₂ K)ᘁ ⊗ 𝟙 (V₂ K)) ⊗ ((μ' K q).hom ⊗ 𝟙 (V₂ K)ᘁ) ≫ ε_⁻ (V₂ K)) ≫ ((𝟙 (V₂ K)ᘁ ⊗ 𝟙 (V₂ K)) ⊗ η_⁺ (V₂ K)) ≫ (α_ (V₂ K)ᘁ (V₂ K) (V₂ K ⊗ (V₂ K)ᘁ)).hom ≫ (𝟙 (V₂ K)ᘁ ⊗ (α_ (V₂ K) (V₂ K) (V₂ K)ᘁ).inv) ≫ (𝟙 (V₂ K)ᘁ ⊗ (c' K q).hom ⊗ 𝟙 (V₂ K)ᘁ) ≫ (𝟙 (V₂ K)ᘁ ⊗ (α_ (V₂ K) (V₂ K) (V₂ K)ᘁ).hom) ≫ (α_ (V₂ K)ᘁ (V₂ K) (V₂ K ⊗ (V₂ K)ᘁ)).inv ≫ (ε_⁺ (V₂ K) ⊗ 𝟙 (V₂ K) ⊗ 𝟙 (V₂ K)ᘁ) ≫ (λ_ (V₂ K ⊗ (V₂ K)ᘁ)).hom = 𝟙 (V₂ K) ⊗ 𝟙 (V₂ K)
+-/
+
 @[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
   change finite_dimensional K (bool → K),
   exact finite_dimensional.finite_dimensional_pi K,
@@ -482,8 +498,13 @@ noncomputable def jones_R_matrix: enhanced_R_matrix (FinVect K) (V₂ K) := {
   relation_2 := by apply R_relation_2 K q,
   relation_3_1 := by rw trace_2; apply R_relation_3_1 K q,
   relation_3_2 := by rw trace_2; apply R_relation_3_2 K q,
-  relation_4_1 := sorry,
-  relation_4_2 := sorry
+  relation_4_1 := begin
+    unfold_projs, dsimp,
+    sorry,
+  end,
+  relation_4_2 := sorry,
+  relation_4_3 := sorry,
+  relation_4_4 := sorry
 }
 
 end jones
@@ -498,5 +519,6 @@ end kassel
 # todo
 - R_relation_4_* の記述および証明
   - enhanced_R_matrix に Tangle の 7_*, 8_* に相当する 4 式をそのまま仮定する方針で
+- right_pivotal_category.lean の sorry 埋め
 
 -/
