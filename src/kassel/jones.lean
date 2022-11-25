@@ -624,24 +624,172 @@ begin
   rw R_relation_4_2_matrix,
 end
 
-lemma R_relation_4_3_matrix: true :=
+lemma R_relation_4_3_matrix:
+  right_unitor.hom_matrix K (bool × bool) ⬝
+  1 ⊗ₖ 1 ⊗ₖ (evaluation.matrix K bool ⬝ μ_matrix q ⊗ₖ 1) ⬝
+  associator.inv_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ (R_matrix_inv q ⊗ₖ (1: matrix bool bool K)) ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.inv_matrix K ⬝
+  associator.hom_matrix K ⬝
+  (1 ⊗ₖ μ_matrix_inv q ⬝ coevaluation.matrix K bool) ⊗ₖ (1 ⊗ₖ 1) ⬝
+  evaluation.matrix K bool ⊗ₖ ((1: matrix bool bool K) ⊗ₖ (1: matrix bool bool K)) ⬝
+  associator.inv_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ (R_matrix q ⊗ₖ (1: matrix bool bool K)) ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.inv_matrix K ⬝
+  associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ 1 ⊗ₖ coevaluation.matrix K bool ⬝
+  right_unitor.inv_matrix K (bool × bool) =
+  1 ⊗ₖ 1 :=
 begin
-  sorry,
+  apply matrix.ext',
+  intro v,
+  iterate 15 {
+    rw ←matrix.mul_vec_mul_vec,
+    nth_rewrite 1 matrix.mul_vec_apply,
+    simp [←finset.univ_product_univ, finset.sum_product, matrix.mul_apply],
+  },
+  rw matrix.mul_vec_apply,
+  simp [←finset.univ_product_univ, finset.sum_product, matrix.smul_mul_vec_assoc],
+  ext ⟨x, y⟩, cases x; cases y; ring_nf; field_simp; ring_nf; tauto,
 end
 
-lemma R_relation_4_3: true :=
+lemma R_relation_4_3:
+  right_unitor.hom K (tensor_product K (module.dual K (bool → K)) (bool → K)) ∘ₗ
+  tensor_product.map
+    (tensor_product.map linear_map.id linear_map.id)
+    (evaluation.rev K (bool → K) ∘ₗ tensor_product.map (μ_hom q) linear_map.id) ∘ₗ
+  associator.inv K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map linear_map.id (associator.hom K _ _ _) ∘ₗ
+  tensor_product.map linear_map.id (tensor_product.map (R_inv q) linear_map.id) ∘ₗ
+  tensor_product.map linear_map.id (associator.inv K _ _ _) ∘ₗ
+  associator.hom K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map
+    (tensor_product.map linear_map.id (μ_inv q) ∘ₗ coevaluation.rev K (bool → K))
+    (tensor_product.map linear_map.id linear_map.id) ∘ₗ
+  tensor_product.map (evaluation.hom K (bool → K)) (tensor_product.map linear_map.id linear_map.id) ∘ₗ
+  associator.inv K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map linear_map.id (associator.hom K _ _ _) ∘ₗ
+  tensor_product.map linear_map.id (tensor_product.map (R_hom q) linear_map.id) ∘ₗ
+  tensor_product.map linear_map.id (associator.inv K _ _ _) ∘ₗ
+  associator.hom K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map (tensor_product.map linear_map.id linear_map.id) (coevaluation.hom K (bool → K)) ∘ₗ
+  right_unitor.inv K (tensor_product K (module.dual K (bool → K)) (bool → K)) =
+  tensor_product.map linear_map.id linear_map.id :=
 begin
-  sorry,
+  apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
+    ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool))
+    ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool))
+  )).mp,
+  simp only [
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)).tensor_product (basis.singleton unit K)) _,
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis))) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((basis.singleton unit K).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis) _,
+    tensor_product.to_matrix
+  ],
+  simp_rw [
+    R_hom, R_inv, μ_hom, μ_inv, linear_map.to_matrix_to_lin,
+    linear_map.to_matrix_id,
+    associator.hom_to_matrix,
+    associator.inv_to_matrix,
+    right_unitor.hom_to_matrix,
+    right_unitor.inv_to_matrix,
+    coevaluation.to_matrix,
+    coevaluation.rev_to_matrix,
+    evaluation.to_matrix,
+    evaluation.rev_to_matrix,
+    ←matrix.mul_assoc
+  ],
+  rw R_relation_4_3_matrix,
 end
 
-lemma R_relation_4_4_matrix: true :=
+lemma R_relation_4_4_matrix:
+  right_unitor.hom_matrix K (bool × bool) ⬝
+  1 ⊗ₖ 1 ⊗ₖ (evaluation.matrix K bool ⬝ μ_matrix q ⊗ₖ 1) ⬝
+  associator.inv_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ (R_matrix q ⊗ₖ (1: matrix bool bool K)) ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.inv_matrix K ⬝
+  associator.hom_matrix K ⬝
+  (1 ⊗ₖ μ_matrix_inv q ⬝ coevaluation.matrix K bool) ⊗ₖ (1 ⊗ₖ 1) ⬝
+  evaluation.matrix K bool ⊗ₖ ((1: matrix bool bool K) ⊗ₖ (1: matrix bool bool K)) ⬝
+  associator.inv_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ (R_matrix_inv q ⊗ₖ (1: matrix bool bool K)) ⬝
+  (1: matrix bool bool K) ⊗ₖ associator.inv_matrix K ⬝
+  associator.hom_matrix K ⬝
+  (1: matrix bool bool K) ⊗ₖ 1 ⊗ₖ coevaluation.matrix K bool ⬝
+  right_unitor.inv_matrix K (bool × bool) =
+  1 ⊗ₖ 1 :=
 begin
-  sorry,
+  apply matrix.ext',
+  intro v,
+  iterate 15 {
+    rw ←matrix.mul_vec_mul_vec,
+    nth_rewrite 1 matrix.mul_vec_apply,
+    simp [←finset.univ_product_univ, finset.sum_product, matrix.mul_apply],
+  },
+  rw matrix.mul_vec_apply,
+  simp [←finset.univ_product_univ, finset.sum_product, matrix.smul_mul_vec_assoc],
+  ext ⟨x, y⟩, cases x; cases y; ring_nf; field_simp; ring_nf; tauto,
 end
 
-lemma R_relation_4_4: true :=
+lemma R_relation_4_4:
+  right_unitor.hom K (tensor_product K (module.dual K (bool → K)) (bool → K)) ∘ₗ
+  tensor_product.map
+    (tensor_product.map linear_map.id linear_map.id)
+    (evaluation.rev K (bool → K) ∘ₗ tensor_product.map (μ_hom q) linear_map.id) ∘ₗ
+  associator.inv K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map linear_map.id (associator.hom K _ _ _) ∘ₗ
+  tensor_product.map linear_map.id (tensor_product.map (R_hom q) linear_map.id) ∘ₗ
+  tensor_product.map linear_map.id (associator.inv K _ _ _) ∘ₗ
+  associator.hom K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map
+    (tensor_product.map linear_map.id (μ_inv q) ∘ₗ coevaluation.rev K (bool → K))
+    (tensor_product.map linear_map.id linear_map.id) ∘ₗ
+  tensor_product.map (evaluation.hom K (bool → K)) (tensor_product.map linear_map.id linear_map.id) ∘ₗ
+  associator.inv K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map linear_map.id (associator.hom K _ _ _) ∘ₗ
+  tensor_product.map linear_map.id (tensor_product.map (R_inv q) linear_map.id) ∘ₗ
+  tensor_product.map linear_map.id (associator.inv K _ _ _) ∘ₗ
+  associator.hom K _ _ (tensor_product K (bool → K) (module.dual K (bool → K))) ∘ₗ
+  tensor_product.map (tensor_product.map linear_map.id linear_map.id) (coevaluation.hom K (bool → K)) ∘ₗ
+  right_unitor.inv K (tensor_product K (module.dual K (bool → K)) (bool → K)) =
+  tensor_product.map linear_map.id linear_map.id :=
 begin
-  sorry,
+  apply (equiv_like.apply_eq_iff_eq (linear_map.to_matrix
+    ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool))
+    ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool))
+  )).mp,
+  simp only [
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)).tensor_product (basis.singleton unit K)) _,
+    linear_map.to_matrix_comp _ (((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product ((pi.basis_fun K bool).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis))) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product (((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool)).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((basis.singleton unit K).tensor_product ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).dual_basis.tensor_product (pi.basis_fun K bool)) _,
+    linear_map.to_matrix_comp _ ((pi.basis_fun K bool).tensor_product (pi.basis_fun K bool).dual_basis) _,
+    tensor_product.to_matrix
+  ],
+  simp_rw [
+    R_hom, R_inv, μ_hom, μ_inv, linear_map.to_matrix_to_lin,
+    linear_map.to_matrix_id,
+    associator.hom_to_matrix,
+    associator.inv_to_matrix,
+    right_unitor.hom_to_matrix,
+    right_unitor.inv_to_matrix,
+    coevaluation.to_matrix,
+    coevaluation.rev_to_matrix,
+    evaluation.to_matrix,
+    evaluation.rev_to_matrix,
+    ←matrix.mul_assoc
+  ],
+  rw R_relation_4_4_matrix,
 end
 
 @[simp] def V₂: FinVect K := ⟨⟨bool → K⟩, begin
@@ -683,10 +831,9 @@ end kassel
 /-
 
 # done
-- R_relation_4_1, 4_2 の記述および証明
+- R_relation_4_3, 4_4 の記述および証明
 
 # todo
-- R_relation_4_3, 4_4 の記述および証明（R_relation_4_1, 4_2 とほぼ同様に行える）
 - right_pivotal_category.lean の sorry 埋め
 
 -/
