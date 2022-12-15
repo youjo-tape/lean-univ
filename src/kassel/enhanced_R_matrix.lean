@@ -206,12 +206,12 @@ begin
   iterate 4 { rw ←tensor_comp_assoc (𝟙 (Vᘁ ⊗ Vᘁ)) _ (𝟙 (Vᘁ ⊗ Vᘁ)) _, rw category.comp_id, }, repeat { rw category.assoc, },
   rw [←category.comp_id (α_ V V (Vᘁ ⊗ Vᘁ)).inv, ←tensor_id (V ⊗ V) (Vᘁ ⊗ Vᘁ)],
   nth_rewrite 1 ←(δ_ _ _).inv_hom_id, rw id_tensor_comp (δ_ V V).inv _,
-  rw [←coevaluation_tensor_assoc, id_tensor_comp_assoc],
+  rw [←coevaluation_hom_tensor_assoc, id_tensor_comp_assoc],
 
   iterate 4 { rw ←comp_tensor_id_assoc, }, repeat { rw category.assoc, },
   rw [←category.id_comp (α_ Vᘁ Vᘁ (V ⊗ V)).hom, ←tensor_id (Vᘁ ⊗ Vᘁ) (V ⊗ V)],
   nth_rewrite 4 ←(δ_ _ _).inv_hom_id, rw comp_tensor_id_assoc (δ_ V V).inv _, repeat { rw category.assoc, },
-  rw [←evaluation_tensor, comp_tensor_id_assoc],
+  rw [←evaluation_hom_tensor, comp_tensor_id_assoc],
 
   rw ←associator_inv_naturality_assoc,
   iterate 3 { rw [←tensor_comp_assoc  _ _ (δ_ _ _).inv _, id_comp_comp_id, tensor_comp_assoc], },
