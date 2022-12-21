@@ -231,55 +231,6 @@ begin
   simp_rw [←tensor_comp, iso.hom_inv_id, tensor_id],
 end
 
-namespace FinVect
-
-variables {K: Type v} [field K]
-
-noncomputable def right_pivotor (X: FinVect.{v} K): X ≅ Xᘁᘁ := {
-  hom := right_pivotor.hom K X.obj,
-  inv := right_pivotor.inv K X.obj,
-  hom_inv_id' := by ext; simp [←module.eval_equiv_to_linear_map],
-  inv_hom_id' := by ext; simp [←module.eval_equiv_to_linear_map]
-}
-
-namespace aux
-
-variables
-  (X Y: Type*)
-  [add_comm_group X] [module K X] [finite_dimensional K X]
-  [add_comm_group Y] [module K Y] [finite_dimensional K Y]
-  (X' Y': Module.{u} K) (f': X' ⟶ Y')
-
-variable (f: X →ₗ[K] Y)
-
-#check (right_pivotor.hom K Y) ∘ₗ f
-
--- lemma right_pivotor_naturality' (f: X →ₗ[K] Y): ∘ₗ f
-
-end aux
-
-lemma right_pivotor_naturality (X Y: FinVect K) (f: X ⟶ Y):
-  f ≫ (right_pivotor Y).hom = (right_pivotor X).hom ≫ fᘁᘁ :=
-begin
-  unfold_projs, dsimp [right_adjoint_mate],
-  sorry,
-end
-
-lemma right_pivotor_tensor_naturality (X Y: FinVect K):
-  (right_pivotor (X ⊗ Y)).hom = ((right_pivotor X).hom ⊗ (right_pivotor Y).hom) ≫ (δ_ _ _).inv ≫ ((δ_ _ _).hom)ᘁ :=
-begin
-  unfold_projs, dsimp [right_adjoint_mate],
-  sorry,
-end
-
-noncomputable instance right_pivotal_category: right_pivotal_category (FinVect K) := {
-  right_pivotor := right_pivotor,
-  right_pivotor_naturality' := right_pivotor_naturality,
-  right_pivotor_tensor_naturality' := right_pivotor_tensor_naturality
-}
-
-end FinVect
-
 end right_pivotal_category
 
 section
@@ -444,51 +395,56 @@ end
 end
 
 section
-  open right_pivotal_category
-  variables
-    {C: Type u}
-    [category.{v} C]
-    [monoidal_category.{v} C]
-    [right_rigid_category.{v} C]
-    [right_pivotal_category C]
 
-  lemma right_adjoint_mate_inv {X Y: C} (f: X ⟶ Y):
-  (λ_ _).inv ≫ (η_⁺ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ fᘁ) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁺ _) ≫ (ρ_ _).hom = f := begin
-    simp [coevaluation', evaluation'],
-    simp [right_adjoint_mate],
-    slice_lhs 8 10 { rw [←id_tensor_comp, ←id_tensor_comp, pentagon_inv, id_tensor_comp], }, simp,
-    slice_lhs 11 12 { rw [associator_inv_conjugation, ←triangle_assoc_comp_right, comp_tensor_id], simp, },
-    slice_lhs 10 12 { rw pentagon_inv, }, simp,
-    slice_lhs 9 10 { rw associator_inv_naturality, },
-    slice_lhs 10 11 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
-    slice_lhs 9 10 { rw [←associator_inv_naturality, ←id_tensor_comp_tensor_id (ε_ _ _) (ε_ _ _), id_tensor_comp], },
-    slice_lhs 8 9 { rw [←id_tensor_comp, ←tensor_id, ←associator_inv_naturality, id_tensor_comp], },
-    slice_lhs 7 8 { rw [←tensor_comp, ←tensor_comp, tensor_id_comp_id_tensor, ←id_tensor_comp_tensor_id _ f, tensor_comp, tensor_comp], },
-    slice_lhs 6 7 { rw [←id_tensor_comp, ←id_tensor_comp], },
-    slice_lhs 5 6 { rw [←id_tensor_comp, ←id_tensor_comp, exact_pairing.evaluation_coevaluation], }, simp,
-    slice_lhs 4 5 { rw [←id_tensor_comp, ←id_tensor_comp, (λ_ _).inv_hom_id], },
-    slice_lhs 5 6 { rw [←id_tensor_comp, ←id_tensor_comp, (ρ_ _).inv_hom_id], },
-    slice_lhs 7 8 { rw [←id_tensor_comp, ←id_tensor_comp, (ρ_ _).inv_hom_id], }, simp,
-    slice_lhs 3 4 { rw ←associator_naturality, },
-    slice_lhs 2 3 { rw [tensor_id, tensor_id_comp_id_tensor, ←id_tensor_comp_tensor_id], },
-    slice_lhs 3 5 { rw exact_pairing.evaluation_coevaluation, }, simp,
-  end
-  
-  @[reassoc] lemma right_adjoint_mate {X Y: C} (f: X ⟶ Y):
-    (ρ_ _).inv ≫ (𝟙 _ ⊗ η_⁺ _) ≫ (𝟙 _ ⊗ (f ⊗ 𝟙 _)) ≫ (α_ _ _ _).inv ≫ ((ε_⁺ _) ⊗ 𝟙 _) ≫ (λ_ _).hom = fᘁ :=
-      by rw [coevaluation', evaluation', right_adjoint_mate]
-  @[reassoc] lemma right_adjoint_mate_rev {X Y: C} (f: X ⟶ Y):
-    (λ_ _).inv ≫ (η_⁻ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ f) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁻ _) ≫ (ρ_ _).hom = fᘁ :=
-  begin
-    simp [coevaluation_rev, evaluation_rev],
-    slice_lhs 4 6 {
-      simp only [←tensor_comp, category.comp_id],
-      simp [right_pivotor_naturality],
-    },
-    slice_lhs 3 4 { rw ←associator_naturality, },
-    repeat { rw category.assoc, },
-    rw right_adjoint_mate_inv,
-  end
+open right_pivotal_category
+
+variables
+  {C: Type u}
+  [category.{v} C]
+  [monoidal_category.{v} C]
+  [right_rigid_category.{v} C]
+  [right_pivotal_category C]
+
+lemma right_adjoint_mate_inv {X Y: C} (f: X ⟶ Y):
+  (λ_ _).inv ≫ (η_⁺ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ fᘁ) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁺ _) ≫ (ρ_ _).hom = f :=
+begin
+  simp [coevaluation', evaluation'],
+  simp [right_adjoint_mate],
+  slice_lhs 8 10 { rw [←id_tensor_comp, ←id_tensor_comp, pentagon_inv, id_tensor_comp], }, simp,
+  slice_lhs 11 12 { rw [associator_inv_conjugation, ←triangle_assoc_comp_right, comp_tensor_id], simp, },
+  slice_lhs 10 12 { rw pentagon_inv, }, simp,
+  slice_lhs 9 10 { rw associator_inv_naturality, },
+  slice_lhs 10 11 { rw [←tensor_comp, id_comp_comp_id, tensor_comp], },
+  slice_lhs 9 10 { rw [←associator_inv_naturality, ←id_tensor_comp_tensor_id (ε_ _ _) (ε_ _ _), id_tensor_comp], },
+  slice_lhs 8 9 { rw [←id_tensor_comp, ←tensor_id, ←associator_inv_naturality, id_tensor_comp], },
+  slice_lhs 7 8 { rw [←tensor_comp, ←tensor_comp, tensor_id_comp_id_tensor, ←id_tensor_comp_tensor_id _ f, tensor_comp, tensor_comp], },
+  slice_lhs 6 7 { rw [←id_tensor_comp, ←id_tensor_comp], },
+  slice_lhs 5 6 { rw [←id_tensor_comp, ←id_tensor_comp, exact_pairing.evaluation_coevaluation], }, simp,
+  slice_lhs 4 5 { rw [←id_tensor_comp, ←id_tensor_comp, (λ_ _).inv_hom_id], },
+  slice_lhs 5 6 { rw [←id_tensor_comp, ←id_tensor_comp, (ρ_ _).inv_hom_id], },
+  slice_lhs 7 8 { rw [←id_tensor_comp, ←id_tensor_comp, (ρ_ _).inv_hom_id], }, simp,
+  slice_lhs 3 4 { rw ←associator_naturality, },
+  slice_lhs 2 3 { rw [tensor_id, tensor_id_comp_id_tensor, ←id_tensor_comp_tensor_id], },
+  slice_lhs 3 5 { rw exact_pairing.evaluation_coevaluation, }, simp,
+end
+
+@[reassoc] lemma right_adjoint_mate_hom {X Y: C} (f: X ⟶ Y):
+  (ρ_ _).inv ≫ (𝟙 _ ⊗ η_⁺ _) ≫ (𝟙 _ ⊗ (f ⊗ 𝟙 _)) ≫ (α_ _ _ _).inv ≫ ((ε_⁺ _) ⊗ 𝟙 _) ≫ (λ_ _).hom = fᘁ :=
+by rw [coevaluation', evaluation', right_adjoint_mate]
+
+@[reassoc] lemma right_adjoint_mate_rev {X Y: C} (f: X ⟶ Y):
+  (λ_ _).inv ≫ (η_⁻ _ ⊗ 𝟙 _) ≫ ((𝟙 _ ⊗ f) ⊗ 𝟙 _) ≫ (α_ _ _ _).hom ≫ (𝟙 _ ⊗ ε_⁻ _) ≫ (ρ_ _).hom = fᘁ :=
+begin
+  simp only [coevaluation_rev, evaluation_rev, comp_tensor_id, id_tensor_comp, category.assoc],
+  rw ←associator_naturality_assoc,
+  slice_lhs 3 5 {
+    simp only [←tensor_comp, category.comp_id],
+    rw [right_pivotor_naturality, iso.inv_hom_id_assoc],
+  },
+  simp only [category.assoc],
+  rw right_adjoint_mate_inv,
+end
+
 end
 
 end kassel

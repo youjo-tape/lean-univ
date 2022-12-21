@@ -1,5 +1,6 @@
 import kassel.enhanced_R_matrix
 import kassel.lemma.to_matrix
+import kassel.lemma.FinVect_right_pivotal
 import tactic.field_simp
 
 namespace kassel
@@ -827,13 +828,3 @@ noncomputable def jones_R_matrix: enhanced_R_matrix (FinVect K) (V₂ K) := {
 end jones
 
 end kassel
-
-/-
-
-# done
-- R_relation_4_3, 4_4 の記述および証明
-
-# todo
-- right_pivotal_category.lean の sorry 埋め
-
--/
