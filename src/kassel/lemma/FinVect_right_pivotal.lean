@@ -42,6 +42,12 @@ lemma right_adjoint_mate_eq_dual {X Y: FinVect K} (f: X ⟶ Y):
   fᘁ = f.dual_map :=
 by apply right_adjoint_mate_eq_dual_linear_map
 
+lemma tensor_iso_dual_tensor_dual_apply {X Y: FinVect K} (f: module.dual K X.obj) (g: module.dual K Y.obj):
+  ((δ_ X Y).inv: _ →ₗ[K] _) (g ⊗ₜ[K] f) = ↑(tensor_product.lid K K) ∘ₗ tensor_product.map f g :=
+begin
+  sorry,
+end
+
 lemma module.eval_equiv_to_linear_map' (V) [add_comm_group V] [module K V] [finite_dimensional K V]:
   ⇑(module.eval_equiv K V) = module.dual.eval K V :=
 by rw [←module.eval_equiv_to_linear_map, linear_equiv.coe_to_linear_map]
@@ -65,8 +71,8 @@ lemma right_pivotor_tensor_naturality (X Y: FinVect K):
 begin
   ext x y f, unfold_projs, dsimp [right_pivotor],
   simp_rw module.eval_equiv_to_linear_map',
-  rw module.dual.eval_apply,
-  
+  simp [module.dual.eval_apply, tensor_iso_dual_tensor_dual_apply, right_adjoint_mate_eq_dual],
+
 end
 
 noncomputable instance right_pivotal_category: right_pivotal_category (FinVect K) := {
